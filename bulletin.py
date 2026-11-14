@@ -19,7 +19,7 @@ SOURCES = {
 }
 LANGUES = {"fr": "français", "en": "English", "ar": "العربية"}
 MAX_ITEMS_PAR_SOURCE = 5
-MODELE = "gemini-2.0-flash"  # vérifiez le nom du modèle gratuit actuellement disponible
+MODELE = "gemini-3.1-flash-lite"  # vérifiez le nom du modèle gratuit actuellement disponible
 SORTIE = pathlib.Path("docs")  # dossier publié par GitHub Pages
 
 PROMPT = """Tu es rédacteur en chef d'un journal économique.
