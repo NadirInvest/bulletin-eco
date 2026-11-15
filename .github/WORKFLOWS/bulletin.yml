@@ -21,6 +21,15 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+      - name: Rubriques (tous les fichiers rubrique_*.py)
+        run: |
+          for f in rubrique_*.py; do
+            echo "== $f =="
+            python "$f" || echo "Échec de $f (les autres rubriques continuent)"
+          done
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          FORCER: ${{ github.event_name == 'workflow_dispatch' }}
       - name: Enregistrer les bulletins
         run: |
           git config user.name "bulletin-bot"
