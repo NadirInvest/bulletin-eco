@@ -22,6 +22,10 @@ PAYS = {
     "USA": "États-Unis", "JPN": "Japon", "BRA": "Brésil", "TUR": "Turquie", "EGY": "Égypte",
     "SAU": "Arabie saoudite", "CHN": "Chine", "IND": "Inde", "ZAF": "Afrique du Sud",
     "TUN": "Tunisie", "SEN": "Sénégal", "CAN": "Canada", "ITA": "Italie",
+    "IDN": "Indonésie", "MYS": "Malaisie", "NGA": "Nigeria", "CIV": "Côte d'Ivoire", "MEX": "Mexique",
+    "KOR": "Corée du Sud", "AUS": "Australie", "NZL": "Nouvelle-Zélande", "CHE": "Suisse", "RUS": "Russie",
+    "PRT": "Portugal", "NOR": "Norvège", "SWE": "Suède", "DNK": "Danemark", "FIN": "Finlande",
+    "ARG": "Argentine", "URY": "Uruguay", "PHL": "Philippines", "THA": "Thaïlande",
 }
 REFERENCE = ["MAR", "FRA", "DEU", "USA"]  # pays de comparaison (les 3 premiers différents du pays étudié)
 INDICATEURS = {
