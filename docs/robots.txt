@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://nadirinvest.github.io/bulletin-eco/sitemap.xml
