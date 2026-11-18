@@ -1,0 +1,30 @@
+[
+ {
+  "cle": "fiscalite",
+  "nom": "Fiscalité",
+  "description": "une analyse par pays chaque semaine, avec lecture historique et comparaison internationale",
+  "page": "fiscalite.html",
+  "couleur": "#7a3cff"
+ },
+ {
+  "cle": "management",
+  "nom": "Management",
+  "description": "synthèses de la recherche récente sur les comportements managériaux, avec des solutions concrètes",
+  "page": "management.html",
+  "couleur": "#e8590c"
+ },
+ {
+  "cle": "grh",
+  "nom": "GRH",
+  "description": "les préoccupations des entreprises en ressources humaines, éclairées par la recherche, avec des solutions",
+  "page": "grh.html",
+  "couleur": "#0b7285"
+ },
+ {
+  "cle": "economie",
+  "nom": "Économie",
+  "description": "analyses macro et microéconomiques tirées d'articles scientifiques récents",
+  "page": "economie.html",
+  "couleur": "#2f9e44"
+ }
+]
