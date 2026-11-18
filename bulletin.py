@@ -41,34 +41,37 @@ TEXTES = {
     "fr": {"site": "Le Bulletin Économique", "sous": "L'essentiel de l'actualité économique, analysé et expliqué",
            "une": "À la une", "sources": "Sources", "accueil": "Accueil", "edition": "Édition du",
            "actualite": "Actualité du jour", "archives": "Archives",
-           "analyse": "Analyse", "critique": "Regard critique", "pistes": "Pistes de solution",
+           "analyse": "Analyse", "critique": "Regard critique", "pistes": "Pistes de solution", "retenir": "À retenir",
            "avert": "Contenu généré par IA à partir de sources officielles ; ne constitue pas un conseil en investissement."},
     "en": {"site": "The Economic Bulletin", "sous": "Economic news, analysed and explained",
            "une": "Top story", "sources": "Sources", "accueil": "Home", "edition": "Edition of",
            "actualite": "Today's news", "archives": "Archives",
-           "analyse": "Analysis", "critique": "Critical view", "pistes": "Possible solutions",
+           "analyse": "Analysis", "critique": "Critical view", "pistes": "Possible solutions", "retenir": "Key takeaways",
            "avert": "AI-generated content based on official sources; not investment advice."},
     "ar": {"site": "النشرة الاقتصادية", "sous": "أخبار الاقتصاد، محلّلة ومشروحة",
            "une": "الخبر الرئيسي", "sources": "المصادر", "accueil": "الرئيسية", "edition": "عدد",
            "actualite": "أخبار اليوم", "archives": "الأرشيف",
-           "analyse": "التحليل", "critique": "نظرة نقدية", "pistes": "حلول مقترحة",
+           "analyse": "التحليل", "critique": "نظرة نقدية", "pistes": "حلول مقترحة", "retenir": "أهم النقاط",
            "avert": "محتوى مُنشأ بالذكاء الاصطناعي من مصادر رسمية ولا يُعد نصيحة استثمارية."},
 }
 
 PROMPT = """Tu es rédacteur en chef et analyste d'un journal économique. Écris en {langue}.
-À partir UNIQUEMENT des éléments numérotés ci-dessous (communiqués officiels), produis entre 3 et {max_articles} articles d'analyse distincts, du plus important au moins important.
+À partir des éléments numérotés ci-dessous (communiqués officiels), produis entre 3 et {max_articles} articles d'analyse DÉTAILLÉS et distincts, du plus important au moins important.
+Un lecteur doit apprendre des choses concrètes : explique les termes techniques en mots simples, replace l'événement dans son contexte, détaille les conséquences. Ce n'est pas un résumé.
 Règles strictes :
-- N'invente aucun fait ni aucun chiffre ; utilise seulement ce qui figure dans les éléments.
+- Les faits et les chiffres viennent UNIQUEMENT des éléments fournis ; n'invente aucun fait ni aucun chiffre.
+- Tu peux t'appuyer sur des connaissances économiques générales et solides pour expliquer les mécanismes, sans inventer de chiffres.
 - Rédige avec tes propres mots (ne recopie pas les phrases des sources).
 - Ton neutre et factuel : aucune opinion politique, aucune polémique ; la critique porte sur les limites, les risques et les points non précisés.
 - Chaque article contient :
   "rubrique" : une valeur parmi {rubriques},
   "titre" : un titre clair et attractif,
-  "chapeau" : 2 phrases qui donnent l'essentiel,
-  "contexte" : 4 à 5 phrases expliquant ce qui s'est passé et pourquoi c'est important,
-  "analyse" : 4 à 5 phrases sur les causes et les conséquences probables pour l'économie, les entreprises et les ménages,
-  "regard_critique" : 2 à 3 phrases sur les limites, les risques ou ce que la source ne dit pas,
-  "pistes" : 2 à 3 phrases de solutions ou d'actions concrètes envisageables, formulées comme des pistes,
+  "chapeau" : 2 à 3 phrases qui donnent l'essentiel,
+  "contexte" : 6 à 8 phrases expliquant ce qui s'est passé, pourquoi, et pourquoi c'est important,
+  "analyse" : 6 à 8 phrases sur les causes, les mécanismes et les conséquences probables pour l'économie, les entreprises et les ménages,
+  "regard_critique" : 3 à 4 phrases sur les limites, les risques ou ce que la source ne dit pas,
+  "pistes" : 3 à 4 phrases de solutions ou d'actions concrètes envisageables, formulées comme des pistes,
+  "a_retenir" : une liste de 3 points courts à retenir,
   "sources" : la liste des numéros des éléments utilisés (entiers).
 - Réponds UNIQUEMENT avec un JSON valide de la forme : {{"articles": [ {{...}}, {{...}} ]}}
 
@@ -98,12 +101,44 @@ def e(texte):
 
 def appeler_gemini(prompt):
     url = f"https://generativelanguage.googleapis.com/v1beta/models/{MODELE}:generateContent"
-    corps = {"contents": [{"parts": [{"text": prompt}]}], "generationConfig": {"responseMimeType": "application/json"}}
-    r = requests.post(url, params={"key": os.environ["GEMINI_API_KEY"]}, json=corps, timeout=180)
+    corps = {"contents": [{"parts": [{"text": prompt}]}],
+             "generationConfig": {"responseMimeType": "application/json", "maxOutputTokens": 8192, "temperature": 0.4}}
+    r = requests.post(url, params={"key": os.environ["GEMINI_API_KEY"]}, json=corps, timeout=240)
     r.raise_for_status()
     brut = r.json()["candidates"][0]["content"]["parts"][0]["text"]
     brut = re.sub(r"^```(?:json)?|```$", "", brut.strip(), flags=re.MULTILINE).strip()
     return json.loads(brut)
+
+
+def compter_mots(x):
+    if isinstance(x, str):
+        return len(x.split())
+    if isinstance(x, dict):
+        return sum(compter_mots(v) for v in x.values())
+    if isinstance(x, list):
+        return sum(compter_mots(v) for v in x)
+    return 0
+
+
+def appeler_gemini_json(prompt, minimum_mots=0, essais=2):
+    """Demande un JSON ; si la réponse est trop courte ou tronquée, redemande une fois en insistant."""
+    consigne, dernier = "", None
+    for n in range(essais):
+        try:
+            res = appeler_gemini(prompt + consigne)
+        except (ValueError, KeyError):  # JSON invalide ou tronqué
+            if n == essais - 1:
+                if dernier is not None:
+                    return dernier
+                raise
+            consigne = "\n\nATTENTION : réponds avec un JSON complet et valide, sans le tronquer."
+            continue
+        dernier = res
+        if compter_mots(res) >= minimum_mots or n == essais - 1:
+            return res
+        consigne = (f"\n\nATTENTION : ta réponse précédente était trop courte. Développe davantage chaque section "
+                    f"(explications, exemples, détails concrets) pour atteindre au moins {minimum_mots} mots au total.")
+    return dernier
 
 
 # --- 1. Collecte ---------------------------------------------------------------
@@ -114,7 +149,7 @@ def texte_page(url):
         r.raise_for_status()
         h = re.sub(r"(?is)<(script|style|nav|header|footer|noscript)[^>]*>.*?</\1>", " ", r.text)
         paragraphes = [nettoyer(p) for p in re.findall(r"(?is)<p[^>]*>(.*?)</p>", h)]
-        return " ".join(p for p in paragraphes if len(p) > 60)[:1800]
+        return " ".join(p for p in paragraphes if len(p) > 60)[:2500]
     except Exception:
         return ""
 
@@ -142,7 +177,7 @@ def rediger(elements, code_langue):
         f"{x['id']}. [{x['source']}] {x['titre']} : {x['resume']} {x['extrait']}".strip() for x in elements)
     prompt = PROMPT.format(langue=LANGUE_PROMPT[code_langue], max_articles=MAX_ARTICLES,
                            rubriques=", ".join(RUBRIQUES), elements=texte_elements)
-    articles = appeler_gemini(prompt)["articles"]
+    articles = appeler_gemini_json(prompt, minimum_mots=900)["articles"]
     return [a for a in articles if a.get("titre") and (a.get("contexte") or a.get("texte"))]
 
 
@@ -346,6 +381,10 @@ def sections(article, code):
     for cle, libelle in (("analyse", t["analyse"]), ("regard_critique", t["critique"]), ("pistes", t["pistes"])):
         if article.get(cle):
             sortie += f'<div class="sec"><b>{e(libelle)}</b><p>{e(article[cle])}</p></div>'
+    points = [p for p in article.get("a_retenir", []) if isinstance(p, str) and p.strip()]
+    if points:
+        sortie += (f'<div class="sec"><b>{e(t["retenir"])}</b><ul style="margin:.3rem 0;padding-inline-start:1.2rem">'
+                   + "".join(f"<li>{e(p)}</li>" for p in points) + "</ul></div>")
     return sortie
 
 

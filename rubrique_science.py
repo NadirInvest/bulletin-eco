@@ -19,7 +19,7 @@ EXTRA_CSS = """
 .bloc{background:var(--carte);border:1px solid var(--bord);border-radius:14px;padding:18px 20px;margin-bottom:16px}
 .bloc h3{margin:.1rem 0 .5rem;font-size:1.1rem}
 .solutions{counter-reset:s;list-style:none;padding:0;margin:.4rem 0}
-.solutions li{counter-increment:s;position:relative;padding:10px 12px;padding-inline-start:46px;margin:8px 0;border:1px solid var(--bord);border-radius:12px}
+.solutions li{counter-increment:s;position:relative;padding:10px 12px;padding-inline-start:46px;margin:8px 0;border:1px solid var(--bord);border-radius:12px;line-height:1.55}
 .solutions li::before{content:counter(s);position:absolute;inset-inline-start:12px;top:9px;width:24px;height:24px;border-radius:50%;
 background:var(--c);color:#fff;font-size:.82rem;font-weight:700;display:flex;align-items:center;justify-content:center}
 .refs{font-size:.88rem;padding-inline-start:1.3rem}
@@ -99,21 +99,30 @@ THEMES = {
     },
 }
 
-PROMPT = """Tu es un chercheur-rédacteur qui vulgarise la recherche pour des décideurs, des managers et des étudiants. Écris en français clair.
-Sujet du jour : « {sujet} » (rubrique : {nom} {niveau}).
-Tu disposes UNIQUEMENT des résumés d'articles scientifiques numérotés ci-dessous :
-{travaux}
+PROMPT = """Tu es un chercheur-rédacteur qui écrit pour des managers, des étudiants et des décideurs. Écris en français clair, avec un ton pédagogique et professionnel.
+L'article doit être DÉTAILLÉ et utile : le lecteur doit apprendre des choses concrètes et pouvoir agir, pas lire un simple résumé.
+Sujet du jour : « @SUJET@ » (rubrique : @NOM@ @NIVEAU@).
+
+ARTICLES SCIENTIFIQUES (résumés fournis) :
+@TRAVAUX@
 
 Règles strictes :
-- Utilise seulement ce que disent ces résumés ; n'invente aucun résultat, chiffre, auteur ou conclusion.
-- Réécris avec tes propres mots ; ne recopie pas les phrases des résumés.
-- Cite les articles par leur numéro entre crochets, par exemple [1] ou [2][4].
-- Signale honnêtement les limites (échantillon, contexte, méthode) quand les résumés les mentionnent.
-- Les solutions doivent découler des résultats présentés et être formulées comme des pistes d'action concrètes.
-- Réponds UNIQUEMENT avec un JSON valide de cette forme :
-{{"titre": "titre clair et attractif", "chapeau": "2 phrases", "constats": "paragraphe de 6 à 8 phrases : ce que montre la recherche",
-"debats": "paragraphe de 4 à 5 phrases : nuances, divergences et limites", "pour_les_praticiens": "paragraphe de 4 à 5 phrases : ce que cela change pour les décideurs",
-"solutions": ["4 pistes concrètes, une ou deux phrases chacune"], "conclusion": "2 à 3 phrases"}}
+- Pour la partie « etudes » : utilise UNIQUEMENT ce que disent les résumés ci-dessus ; n'invente aucun résultat, chiffre, auteur ou conclusion. Mentionne les limites quand elles apparaissent.
+- Pour « introduction », « eclairage » et « mise_en_pratique » : tu peux t'appuyer sur des connaissances générales solides et reconnues (définitions, mécanismes, bonnes pratiques). N'invente aucun chiffre ni statistique, et ne présente jamais ces éléments comme des résultats des études citées.
+- Réécris avec tes propres mots, explique les termes techniques, donne des exemples génériques (sans nommer de vraies entreprises ni inventer de cas réels).
+- Réponds UNIQUEMENT avec un JSON valide de cette forme, en respectant les longueurs :
+{"titre": "titre clair et attractif",
+ "chapeau": "3 phrases",
+ "introduction": "150 à 200 mots : pourquoi ce sujet compte, définition simple des notions clés",
+ "eclairage": "150 à 200 mots : mécanismes et concepts à connaître pour comprendre le sujet",
+ "etudes": [{"ref": 1, "titre_court": "intitulé court de l'étude", "apport": "70 à 100 mots : question étudiée, méthode si elle est connue, résultat principal, limites"}],
+ "synthese": "150 à 200 mots : points de convergence, divergences, ce qui reste incertain",
+ "mise_en_pratique": [{"etape": "titre court", "detail": "40 à 70 mots : action concrète, comment la mener, pièges à éviter"}],
+ "indicateurs": ["4 à 5 indicateurs à suivre pour mesurer les progrès"],
+ "erreurs_a_eviter": ["4 erreurs fréquentes, une phrase chacune"],
+ "pour_reflechir": ["3 questions que le lecteur peut se poser dans son organisation"],
+ "conclusion": "3 à 4 phrases"}
+- « etudes » contient une entrée par article fourni ; « mise_en_pratique » contient 5 à 6 étapes.
 """
 
 
@@ -135,7 +144,7 @@ def chercher(requete):
         raise SystemExit("Clé OPENALEX_API_KEY absente : créez-la (gratuite) sur openalex.org puis ajoutez-la dans les secrets GitHub.")
     depuis = f"{datetime.date.today().year - 2}-01-01"
     r = requests.get("https://api.openalex.org/works", params={
-        "search": requete, "per_page": 10, "api_key": cle,
+        "search": requete, "per_page": 12, "api_key": cle,
         "filter": f"from_publication_date:{depuis},has_abstract:true,type:article",
         "select": "id,doi,display_name,publication_year,authorships,primary_location,abstract_inverted_index",
     }, timeout=60)
@@ -151,8 +160,8 @@ def chercher(requete):
         revue = ((w.get("primary_location") or {}).get("source") or {}).get("display_name") or ""
         travaux.append({"titre": w.get("display_name") or "", "annee": w.get("publication_year"),
                         "auteurs": ", ".join(auteurs), "revue": revue,
-                        "lien": w.get("doi") or w.get("id") or "", "resume": resume[:1500]})
-    return travaux[:5]
+                        "lien": w.get("doi") or w.get("id") or "", "resume": resume[:2200]})
+    return travaux[:6]
 
 
 # --- 2. Mise en page ------------------------------------------------------------
@@ -162,25 +171,40 @@ def entete(theme, sujet_fr):
             f'<div class="langues"><a href="index.html">Accueil</a><a href="{theme["rubrique"]}.html">Toutes les analyses</a></div>')
 
 
+def liste_ul(items):
+    items = [x for x in items if isinstance(x, str) and x.strip()]
+    return "<ul>" + "".join(f"<li>{e(x)}</li>" for x in items) + "</ul>" if items else ""
+
+
 def page_article(theme, sujet_fr, travaux, art, date):
     c = theme["couleur"]
     etiquette = theme["nom"] + (f" · {theme['niveau']}" if theme["niveau"] else "")
-    solutions = "".join(f"<li>{e(s)}</li>" for s in art.get("solutions", []))
     refs = "".join(
         f'<li>[{i}] {e(w["titre"])}. {e(w["auteurs"])} ({e(w["annee"])}). <i>{e(w["revue"])}</i>. '
         + (f'<a href="{e(w["lien"])}" target="_blank" rel="noopener">Lire l\'article</a>' if w["lien"].startswith("http") else "")
         + "</li>" for i, w in enumerate(travaux, 1))
+    etudes = "".join(
+        f'<div class="sec"><b>[{e(x.get("ref", ""))}] {e(x.get("titre_court", ""))}</b><p>{e(x.get("apport", ""))}</p></div>'
+        for x in art.get("etudes", []) if isinstance(x, dict))
+    etapes = "".join(
+        f'<li><b>{e(x.get("etape", ""))}</b><br>{e(x.get("detail", ""))}</li>'
+        for x in art.get("mise_en_pratique", []) if isinstance(x, dict))
     main = (
         f'<span class="tag" style="--c:{c}">{e(etiquette)} · Recherche</span>'
         f'<h2 style="font-size:1.7rem;line-height:1.3;margin:.5rem 0">{e(art["titre"])}</h2>'
         f'<p class="chapeau">{e(art.get("chapeau", ""))}</p>'
-        f'<div class="bloc"><h3>Ce que montre la recherche</h3><p>{e(art.get("constats", ""))}</p></div>'
-        f'<div class="bloc"><h3>Débats, nuances et limites</h3><p>{e(art.get("debats", ""))}</p></div>'
-        f'<div class="bloc"><h3>Ce que cela change pour les praticiens</h3><p>{e(art.get("pour_les_praticiens", ""))}</p></div>'
-        f'<div class="bloc" style="--c:{c}"><h3>Solutions proposées</h3><ol class="solutions">{solutions}</ol></div>'
+        f'<div class="bloc"><h3>Pourquoi ce sujet compte</h3><p>{e(art.get("introduction", ""))}</p></div>'
+        f'<div class="bloc"><h3>À savoir pour bien comprendre</h3><p>{e(art.get("eclairage", ""))}</p>'
+        '<p class="note">Éclairage pédagogique fondé sur des connaissances générales, distinct des résultats des études ci-dessous.</p></div>'
+        f'<div class="bloc"><h3>Ce que disent les études</h3>{etudes}</div>'
+        f'<div class="bloc"><h3>Synthèse : convergences, divergences et incertitudes</h3><p>{e(art.get("synthese", ""))}</p></div>'
+        f'<div class="bloc" style="--c:{c}"><h3>Mise en pratique : par où commencer</h3><ol class="solutions">{etapes}</ol></div>'
+        f'<div class="bloc"><h3>Indicateurs à suivre</h3>{liste_ul(art.get("indicateurs", []))}</div>'
+        f'<div class="bloc"><h3>Erreurs à éviter</h3>{liste_ul(art.get("erreurs_a_eviter", []))}</div>'
+        f'<div class="bloc"><h3>Pour réfléchir dans votre organisation</h3>{liste_ul(art.get("pour_reflechir", []))}</div>'
         f'<div class="bloc"><h3>En conclusion</h3><p>{e(art.get("conclusion", ""))}</p></div>'
         f'<div class="bloc"><h3>Références (articles scientifiques analysés)</h3><ol class="refs" style="list-style:none;padding:0">{refs}</ol></div>'
-        f'<p class="note">Synthèse générée par IA à partir des résumés des articles cités ; consultez les articles originaux avant toute décision. '
+        f'<p class="note">Article généré par IA à partir des résumés des études citées et de connaissances générales ; consultez les articles originaux avant toute décision. '
         f'Ne constitue pas un conseil professionnel. Édition du {e(date)}.</p>'
     )
     return page("fr", f"{etiquette} · {art['titre']}", entete(theme, sujet_fr), "", main, description=art.get("chapeau", ""))
@@ -220,10 +244,13 @@ def traiter(cle, date):
     travaux = chercher(requete)
     if len(travaux) < 2:
         raise ValueError(f"trop peu d'articles trouvés pour « {requete} »")
-    texte = "\n".join(f"[{i}] {w['titre']} ({w['annee']}) : {w['resume']}" for i, w in enumerate(travaux, 1))
-    art = bulletin.appeler_gemini(PROMPT.format(sujet=sujet_fr, nom=theme["nom"], niveau=theme["niveau"], travaux=texte))
-    if not art.get("titre") or not art.get("constats"):
+    texte = "\n\n".join(f"[{i}] {w['titre']} ({w['annee']}) : {w['resume']}" for i, w in enumerate(travaux, 1))
+    prompt = (PROMPT.replace("@SUJET@", sujet_fr).replace("@NOM@", theme["nom"])
+              .replace("@NIVEAU@", theme["niveau"]).replace("@TRAVAUX@", texte))
+    art = bulletin.appeler_gemini_json(prompt, minimum_mots=900)
+    if not art.get("titre") or not art.get("introduction") or not art.get("etudes") or not art.get("mise_en_pratique"):
         raise ValueError("réponse de l'IA incomplète")
+    print(f"  {theme['nom']} : article de {bulletin.compter_mots(art)} mots")
     SORTIE.mkdir(exist_ok=True)
     fichier = f"{theme['rubrique']}-{date}-{cle}.html"
     (SORTIE / fichier).write_text(page_article(theme, sujet_fr, travaux, art, date), encoding="utf-8")

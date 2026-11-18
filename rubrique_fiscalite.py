@@ -97,33 +97,40 @@ def resume_serie(s):
 
 
 # --- 2. Rédaction par l'IA ---------------------------------------------------
-PROMPT = """Tu es analyste en fiscalité publique et rédacteur d'un site d'information. Écris en français clair.
-Sujet : analyse de la structure fiscale de {pays}, comparée à {pairs}.
+PROMPT = """Tu es analyste en fiscalité publique et rédacteur d'un site d'information économique. Écris en français clair, avec un ton pédagogique et professionnel.
+L'article doit être DÉTAILLÉ et utile à un lecteur qui veut comprendre la fiscalité de ce pays : pas un simple résumé de chiffres.
+Sujet : analyse de la structure fiscale de @PAYS@, comparée à @PAIRS@.
 
-DONNÉES OFFICIELLES (Banque mondiale, séries issues du FMI). Ce sont les SEULES données que tu peux utiliser :
-{faits}
+DONNÉES OFFICIELLES (Banque mondiale, séries issues du FMI). Ce sont les SEULES données chiffrées que tu peux utiliser :
+@FAITS@
 
 Règles strictes :
-- N'invente aucun chiffre, taux, loi, réforme, date ou événement absent des données ci-dessus.
+- N'invente aucun chiffre, taux, loi, réforme, date ou événement propre au pays qui soit absent des données ci-dessus.
+- Tu peux expliquer en termes généraux et reconnus ce que sont les grandes familles d'impôts (revenus et bénéfices, biens et services, commerce international) et ce que signifie un niveau de pression fiscale, sans attribuer au pays des règles précises que les données ne montrent pas.
 - Si une donnée manque, écris « donnée non disponible » plutôt que de deviner.
-- Tu analyses la STRUCTURE fiscale (niveau des recettes, poids des impôts sur le revenu, sur la consommation, sur le commerce) et son évolution.
-- Les points faibles sont formulés comme des pistes de réflexion à vérifier, jamais comme des certitudes.
-- Réponds UNIQUEMENT avec un JSON valide de cette forme :
-{{"titre": "...", "chapeau": "1 à 2 phrases", "lecture_historique": "paragraphe de 4 à 6 phrases sur l'évolution dans le temps",
-"structure_fiscale": "paragraphe de 4 à 5 phrases sur la répartition des recettes",
-"points_forts": ["3 points courts"], "points_faibles": ["3 points courts, formulés comme pistes à examiner"],
-"comparaison": "paragraphe de 4 à 5 phrases comparant avec les autres pays", "conclusion": "2 à 3 phrases"}}
+- Les points faibles et les pistes sont formulés comme des hypothèses à examiner, jamais comme des certitudes.
+- Réponds UNIQUEMENT avec un JSON valide de cette forme, en respectant les longueurs :
+{"titre": "titre clair et attractif",
+ "chapeau": "3 phrases",
+ "introduction": "120 à 160 mots : pourquoi la structure fiscale compte et comment lire les indicateurs",
+ "chiffres_cles": "150 à 200 mots : explication de chaque indicateur avec les valeurs fournies",
+ "lecture_historique": "180 à 250 mots : évolution dans le temps, phases, ruptures visibles dans les séries",
+ "structure_fiscale": "180 à 250 mots : répartition des recettes entre les familles d'impôts, expliquée simplement",
+ "points_forts": ["3 à 4 points, chacun en 2 phrases avec explication"],
+ "points_faibles": ["3 à 4 points, chacun en 2 phrases, formulés comme pistes à examiner"],
+ "comparaison": "180 à 250 mots : comparaison détaillée avec les autres pays",
+ "pistes_de_reforme": ["3 à 4 pistes générales à examiner, avec la logique économique de chacune"],
+ "limites_des_donnees": "70 à 100 mots : ce que ces indicateurs ne montrent pas (taux précis, impôts locaux, économie informelle...)",
+ "questions_a_approfondir": ["4 questions pour aller plus loin, à étudier dans les textes nationaux"],
+ "conclusion": "3 à 4 phrases"}
 """
 
 
-def appeler_gemini(prompt):
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/{MODELE}:generateContent"
-    corps = {"contents": [{"parts": [{"text": prompt}]}], "generationConfig": {"responseMimeType": "application/json"}}
-    r = requests.post(url, params={"key": os.environ["GEMINI_API_KEY"]}, json=corps, timeout=180)
-    r.raise_for_status()
-    brut = r.json()["candidates"][0]["content"]["parts"][0]["text"]
-    brut = re.sub(r"^```(?:json)?|```$", "", brut.strip(), flags=re.MULTILINE).strip()
-    return json.loads(brut)
+def rediger_article(pays, pairs, faits):
+    prompt = PROMPT.replace("@PAYS@", pays).replace("@PAIRS@", pairs).replace("@FAITS@", faits)
+    art = bulletin.appeler_gemini_json(prompt, minimum_mots=900)
+    print(f"  Fiscalité : article de {bulletin.compter_mots(art)} mots")
+    return art
 
 
 def construire_faits(iso, donnees, pairs, donnees_pairs):
@@ -196,22 +203,31 @@ def page_article(iso, donnees, pairs, donnees_pairs, art, date):
             d = dernier((donnees if c == iso else donnees_pairs[c])[ind])
             cellules += f"<td>{fmt(d[1]) + ' (' + str(d[0]) + ')' if d else 'n.d.'}</td>"
         lignes += f"<tr><td>{e(nom)}</td>{cellules}</tr>"
+    def liste_riche(items):
+        items = [x for x in items if isinstance(x, str) and x.strip()]
+        return "<ul>" + "".join(f"<li>{e(x)}</li>" for x in items) + "</ul>" if items else ""
+
     main = (
         f'<span class="tag" style="--c:#7a3cff">Fiscalité · {e(pays)}</span>'
         f'<h2 style="font-size:1.7rem;line-height:1.3;margin:.5rem 0">{e(art["titre"])}</h2>'
         f'<p class="chapeau">{e(art.get("chapeau", ""))}</p>'
         f'<div class="kpis">{kpis}</div>'
+        f'<div class="bloc"><h3>Pourquoi la structure fiscale compte</h3><p>{e(art.get("introduction", ""))}</p></div>'
+        f'<div class="bloc"><h3>Les chiffres clés expliqués</h3><p>{e(art.get("chiffres_cles", ""))}</p></div>'
         f'<div class="bloc"><h3>Recettes fiscales (% du PIB) : {e(pays)} et pays de comparaison</h3>{graphique(series, "Recettes fiscales")}</div>'
         f'<div class="bloc"><h3>Lecture historique</h3><p>{e(art.get("lecture_historique", ""))}</p></div>'
         f'<div class="bloc"><h3>Structure des recettes fiscales</h3><p>{e(art.get("structure_fiscale", ""))}</p></div>'
-        f'<div class="deux"><div class="bloc fort"><h3>Points forts</h3>{liste(art.get("points_forts", []))}</div>'
-        f'<div class="bloc faible"><h3>Points faibles et pistes à examiner</h3>{liste(art.get("points_faibles", []))}</div></div>'
+        f'<div class="deux"><div class="bloc fort"><h3>Points forts</h3>{liste_riche(art.get("points_forts", []))}</div>'
+        f'<div class="bloc faible"><h3>Points faibles et pistes à examiner</h3>{liste_riche(art.get("points_faibles", []))}</div></div>'
         f'<div class="bloc"><h3>Comparaison internationale</h3><p>{e(art.get("comparaison", ""))}</p>'
         f'<div class="scroll"><table class="comp"><tr><th></th>{entetes}</tr>{lignes}</table></div></div>'
+        f'<div class="bloc"><h3>Pistes de réforme à examiner</h3>{liste_riche(art.get("pistes_de_reforme", []))}</div>'
+        f'<div class="bloc"><h3>Limites de ces données</h3><p>{e(art.get("limites_des_donnees", ""))}</p></div>'
+        f'<div class="bloc"><h3>Pour aller plus loin</h3>{liste_riche(art.get("questions_a_approfondir", []))}</div>'
         f'<div class="bloc"><h3>En conclusion</h3><p>{e(art.get("conclusion", ""))}</p></div>'
         f'<p class="note">Sources : Banque mondiale, Indicateurs du développement dans le monde (séries issues du FMI) : '
         f'<a href="https://data.worldbank.org/" target="_blank" rel="noopener">data.worldbank.org</a>. '
-        f'Analyse générée par IA à partir de ces données ; la structure fiscale décrite ne remplace pas l\'étude de la législation nationale. '
+        f'Analyse générée par IA à partir de ces données ; elle ne remplace pas l\'étude de la législation nationale. '
         f'Édition du {e(date)}.</p>'
     )
     return page("fr", f"Fiscalité · {pays} · {date}", entete(f"Analyse fiscale : {pays}"), "", main)
@@ -263,7 +279,7 @@ def main():
         pairs = [p for p in REFERENCE if p != iso][:3]
         donnees_pairs = {p: charger(p) for p in pairs}
         faits = construire_faits(iso, donnees, pairs, donnees_pairs)
-        art = appeler_gemini(PROMPT.format(pays=PAYS[iso], pairs=", ".join(PAYS[p] for p in pairs), faits=faits))
+        art = rediger_article(PAYS[iso], ", ".join(PAYS[p] for p in pairs), faits)
         SORTIE.mkdir(exist_ok=True)
         chemin = SORTIE / f"fiscalite-{date}-{iso}.html"
         chemin.write_text(page_article(iso, donnees, pairs, donnees_pairs, art, date), encoding="utf-8")
