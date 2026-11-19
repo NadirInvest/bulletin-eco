@@ -1,5 +1,12 @@
 [
  {
+  "cle": "analyseur",
+  "nom": "Analyseur financier",
+  "description": "outil en ligne : ratios, équilibre financier, diagnostic et valorisation de votre entreprise",
+  "page": "analyseur.html",
+  "couleur": "#364fc7"
+ },
+ {
   "cle": "fiscalite",
   "nom": "Fiscalité",
   "description": "une analyse par pays chaque semaine, avec lecture historique et comparaison internationale",
