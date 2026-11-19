@@ -266,6 +266,15 @@ footer{padding:26px 0 40px;color:var(--doux);font-size:.85rem;text-align:center}
 .pastille{display:inline-block;width:8px;height:8px;border-radius:50%;margin-inline-end:5px;background:#9aa7b8}
 .pastille.ouvert{background:var(--hausse)}
 .maj{font-size:.72rem;color:var(--doux);margin-top:12px;line-height:1.4}
+
+.macro{overflow:hidden;background:#071a33;color:#e8edf3;white-space:nowrap;border-bottom:1px solid #15508a}
+.macro .piste{display:inline-flex;gap:34px;padding:9px 14px;animation:defile var(--dur,240s) linear infinite}
+.macro:hover .piste{animation-play-state:paused}
+.macro a{text-decoration:none}
+.macro .mlabel{color:#f5c542;font-weight:700}
+.macro .mi{font-size:.86rem}.macro .mi b{color:#fff}
+.macro .up{color:#5fd38a}.macro .down{color:#ff8a8a}
+@media (prefers-reduced-motion:reduce){.macro{overflow-x:auto}.macro .piste{animation:none}}
 """
 
 SCRIPT_MARCHES = """<script>
@@ -295,6 +304,28 @@ if(pm){pm.innerHTML='<summary>Marchés : indices, matières premières, devises<
 var tous=[];d.groupes.forEach(function(g){tous=tous.concat(g.items)});
 var seg=tous.map(function(it){var i=info(it);return '<span class="tk '+i.c+'"><b>'+esc(it.nom)+'</b> '+i.val+' <span aria-hidden="true">'+i.a+'</span> '+i.t+'</span>'}).join('');
 if(tk&&seg){tk.innerHTML='<div class="piste">'+seg+seg+'</div>';tk.hidden=false}
+}).catch(function(){});
+})();
+</script>"""
+
+SCRIPT_MACRO = r"""<script>
+(function(){
+function esc(t){return String(t).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+function f(v,d){return Number(v).toLocaleString('fr-FR',{minimumFractionDigits:d,maximumFractionDigits:d})}
+function sg(v,d){return (v>0?'+':'')+f(v,d)}
+fetch('data/macro.json',{cache:'no-cache'}).then(function(r){return r.ok?r.json():null}).then(function(d){
+var mc=document.getElementById('mc');if(!d||!d.lignes||!d.lignes.length||!mc)return;
+function item(l){var p=[];
+if(l.croissance)p.push('<span class="'+(l.croissance.v>=0?'up':'down')+'">Croissance '+sg(l.croissance.v,1)+' %</span>');
+if(l.inflation)p.push('Inflation '+f(l.inflation.v,1)+' %');
+if(l.chomage)p.push('Chômage '+f(l.chomage.v,1)+' %');
+if(l.dette)p.push('Dette publique '+f(l.dette.v,0)+' % du PIB');
+if(l.solde)p.push('<span class="'+(l.solde.v>=0?'up':'down')+'">Solde budgétaire '+sg(l.solde.v,1)+' % du PIB</span>');
+return p.length?'<span class="mi"><b>'+esc(l.nom)+'</b> '+p.join(' · ')+'</span>':''}
+var seg=d.lignes.map(item).join('');if(!seg)return;
+var tete='<a class="mlabel" href="macro.html">Le monde en chiffres ('+esc(d.annee)+', prévisions FMI) &rsaquo;</a>';
+mc.style.setProperty('--dur',Math.max(120,d.lignes.length*9)+'s');
+mc.innerHTML='<div class="piste">'+tete+seg+tete+seg+'</div>';mc.hidden=false;
 }).catch(function(){});
 })();
 </script>"""
@@ -342,13 +373,13 @@ def page(code, titre_onglet, contenu_header, contenu_nav, contenu_main, descript
         f'<!DOCTYPE html><html lang="{code}" dir="{sens}"><head><meta charset="utf-8">'
         '<meta name="viewport" content="width=device-width, initial-scale=1">' + meta +
         f"<title>{e(titre_onglet)}</title><style>{CSS}</style></head><body>" + menu(code) +
-        '<div class="ticker" id="tk" hidden></div>'
+        '<div class="macro" id="mc" hidden></div><div class="ticker" id="tk" hidden></div>'
         f'<header><div class="wrap">{contenu_header}</div></header>{contenu_nav}'
         '<details class="panneau-mobile" id="pm" hidden></details>'
         '<div class="mise"><aside class="cote" id="cg"></aside>'
         f'<main><div class="wrap">{contenu_main}</div></main>'
         '<aside class="cote" id="cd"></aside></div>'
-        f'<footer><div class="wrap">{e(t["avert"])}</div></footer>' + SCRIPT_MARCHES + "</body></html>"
+        f'<footer><div class="wrap">{e(t["avert"])}</div></footer>' + SCRIPT_MARCHES + SCRIPT_MACRO + "</body></html>"
     )
 
 
