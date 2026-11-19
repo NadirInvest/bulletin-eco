@@ -14,6 +14,13 @@
   "couleur": "#7a3cff"
  },
  {
+  "cle": "macro",
+  "nom": "Indicateurs",
+  "description": "les chiffres clés de l'économie mondiale et de chaque pays",
+  "page": "macro.html",
+  "couleur": "#f08c00"
+ },
+ {
   "cle": "management",
   "nom": "Management",
   "description": "synthèses de la recherche récente sur les comportements managériaux, avec des solutions concrètes",

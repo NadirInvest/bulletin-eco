@@ -1,0 +1,171 @@
+<!DOCTYPE html><html lang="fr" dir="ltr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="Croissance, inflation, chômage, dette publique et solde budgétaire par pays, d&#x27;après le FMI."><meta property="og:title" content="Indicateurs macroéconomiques · Le Bulletin Économique"><meta property="og:description" content="Croissance, inflation, chômage, dette publique et solde budgétaire par pays, d&#x27;après le FMI."><meta property="og:type" content="website"><meta property="og:site_name" content="Le Bulletin Économique"><title>Indicateurs macroéconomiques · Le Bulletin Économique</title><style>
+:root{--bg:#f4f6fa;--carte:#fff;--texte:#1b2430;--doux:#5b6678;--marque:#0b2545;--bord:#e3e8ef}
+@media (prefers-color-scheme:dark){:root{--bg:#0e141b;--carte:#17202a;--texte:#e8edf3;--doux:#9aa7b8;--marque:#0a1a2f;--bord:#263341}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--texte);line-height:1.7;
+font-family:system-ui,-apple-system,"Segoe UI",Tahoma,"Noto Naskh Arabic",sans-serif}
+a{color:inherit}
+.wrap{max-width:980px;margin:0 auto;padding:0 16px}
+.menu{background:#071a33;position:sticky;top:0;z-index:10}
+.menu .wrap{display:flex;align-items:center;gap:2px;overflow-x:auto;white-space:nowrap}
+.menu a{color:#dbe7f5;text-decoration:none;padding:13px 12px;font-size:.92rem}
+.menu a:hover{background:rgba(255,255,255,.12)}
+.menu a.marque{font-weight:800;color:#fff;margin-inline-end:10px}
+header{background:linear-gradient(135deg,var(--marque),#15508a);color:#fff;padding:30px 0 22px}
+.site{margin:0;font-size:1.9rem;letter-spacing:-.5px}
+.sous{margin:.3rem 0 1.1rem;opacity:.85}
+.langues{display:flex;gap:8px;flex-wrap:wrap}
+.langues a{color:#fff;text-decoration:none;border:1px solid rgba(255,255,255,.55);padding:6px 16px;border-radius:999px;font-size:.92rem}
+.langues a.actif{background:#fff;color:var(--marque);font-weight:700}
+.date{margin:.9rem 0 0;font-size:.9rem;opacity:.8}
+nav.rub{position:sticky;top:46px;z-index:5;background:var(--bg);border-bottom:1px solid var(--bord);padding:10px 0}
+nav.rub .wrap{display:flex;gap:8px;overflow-x:auto;white-space:nowrap}
+nav.rub a{text-decoration:none;font-size:.88rem;padding:5px 14px;border-radius:999px;border:1px solid var(--bord);background:var(--carte)}
+main{padding:22px 0 10px}
+.une{background:var(--carte);border:1px solid var(--bord);border-radius:18px;padding:26px;margin-bottom:28px;border-inline-start:8px solid var(--c)}
+.une h2{font-size:1.7rem;line-height:1.3;margin:.4rem 0 .6rem}
+.chapeau{font-size:1.08rem;font-weight:600;margin:0 0 .8rem}
+.tag{display:inline-block;font-size:.78rem;font-weight:700;color:#fff;background:var(--c);padding:3px 11px;border-radius:999px}
+h2.rubrique{font-size:1.25rem;margin:30px 0 14px;padding-inline-start:12px;border-inline-start:6px solid var(--c)}
+.grille{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:16px}
+.carte{background:var(--carte);border:1px solid var(--bord);border-radius:14px;padding:18px}
+.carte h3{font-size:1.12rem;line-height:1.35;margin:.1rem 0 .5rem}
+.carte p,.une p{margin:.4rem 0}
+.carte.lien{display:block;text-decoration:none;transition:box-shadow .15s,transform .15s}
+.carte.lien:hover{box-shadow:0 6px 18px rgba(0,0,0,.12);transform:translateY(-2px)}
+.sec{border-inline-start:3px solid var(--bord);padding-inline-start:12px;margin:.8rem 0}
+.sec b{font-size:.78rem;text-transform:uppercase;letter-spacing:.05em;color:var(--doux)}
+.sec p{margin:.2rem 0}
+.src{font-size:.82rem;color:var(--doux);margin-top:.8rem}
+.src a{color:var(--doux)}
+.note{font-size:.82rem;color:var(--doux)}
+footer{padding:26px 0 40px;color:var(--doux);font-size:.85rem;text-align:center}
+.edition{display:block;background:var(--carte);border:1px solid var(--bord);border-radius:14px;padding:18px 20px;margin-bottom:12px}
+.edition .liens{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.edition .liens a{text-decoration:none;border:1px solid var(--bord);padding:5px 14px;border-radius:999px;font-size:.9rem}
+.edition.grand{border-inline-start:8px solid #15508a;padding:24px}
+.edition.grand .liens a{background:#15508a;color:#fff;border-color:#15508a;padding:8px 20px}
+.recherche{width:100%;padding:12px 16px;border-radius:12px;border:1px solid var(--bord);background:var(--carte);color:var(--texte);font-size:1rem;margin-bottom:16px}
+
+:root{--hausse:#1b7f3b;--hausse-bg:#e6f4ea;--baisse:#c0272d;--baisse-bg:#fdeaea}
+@media (prefers-color-scheme:dark){:root{--hausse:#5fd38a;--hausse-bg:#12301f;--baisse:#ff8a8a;--baisse-bg:#3a1517}}
+.up{--t:var(--hausse);--b:var(--hausse-bg)}
+.down{--t:var(--baisse);--b:var(--baisse-bg)}
+.flat{--t:var(--doux);--b:var(--carte)}
+.mise{max-width:1400px;margin:0 auto;padding:0 12px}
+.cote{display:none}
+@media (min-width:1180px){
+.mise{display:grid;grid-template-columns:245px minmax(0,1fr) 245px;gap:20px;align-items:start}
+.cote{display:block;position:sticky;top:56px;max-height:calc(100vh - 70px);overflow:auto;padding-top:22px}
+.ticker,.panneau-mobile{display:none!important}}
+.ticker{overflow:hidden;background:var(--carte);border-bottom:1px solid var(--bord);white-space:nowrap}
+.ticker .piste{display:inline-flex;gap:28px;padding:8px 14px;animation:defile 70s linear infinite}
+.ticker:hover .piste{animation-play-state:paused}
+@keyframes defile{to{transform:translateX(-50%)}}
+@media (prefers-reduced-motion:reduce){.ticker{overflow-x:auto}.ticker .piste{animation:none}}
+.tk{font-size:.85rem;color:var(--t)}.tk b{color:var(--texte);font-weight:600}
+.panneau-mobile{margin:12px 12px 0;background:var(--carte);border:1px solid var(--bord);border-radius:12px;padding:10px 14px}
+.panneau-mobile summary{cursor:pointer;font-weight:600}
+.cote h4{margin:18px 0 6px;font-size:.76rem;text-transform:uppercase;letter-spacing:.06em;color:var(--doux)}
+.lig{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--bord)}
+.lig .nm{flex:1;min-width:0;font-size:.88rem;font-weight:600}
+.lig small{display:block;font-weight:400;color:var(--doux);font-size:.74rem}
+.lig svg{color:var(--t);flex:none}
+.lig .vl{text-align:right;font-size:.88rem;font-weight:600}
+.lig .vr{display:block;font-size:.8rem;color:var(--t);font-weight:600}
+.tuiles{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.tuile{background:var(--b);border-radius:10px;padding:8px 10px;color:var(--t)}
+.tuile.flat{border:1px solid var(--bord)}
+.tuile small{display:block;font-size:.72rem}
+.tuile b{display:block;font-size:.95rem}
+.tuile span{font-size:.78rem;font-weight:600}
+.pastille{display:inline-block;width:8px;height:8px;border-radius:50%;margin-inline-end:5px;background:#9aa7b8}
+.pastille.ouvert{background:var(--hausse)}
+.maj{font-size:.72rem;color:var(--doux);margin-top:12px;line-height:1.4}
+
+.macro{overflow:hidden;background:#071a33;color:#e8edf3;white-space:nowrap;border-bottom:1px solid #15508a}
+.macro .piste{display:inline-flex;gap:34px;padding:9px 14px;animation:defile var(--dur,240s) linear infinite}
+.macro:hover .piste{animation-play-state:paused}
+.macro a{text-decoration:none}
+.macro .mlabel{color:#f5c542;font-weight:700}
+.macro .mi{font-size:.86rem}.macro .mi b{color:#fff}
+.macro .up{color:#5fd38a}.macro .down{color:#ff8a8a}
+@media (prefers-reduced-motion:reduce){.macro{overflow-x:auto}.macro .piste{animation:none}}
+
+.kpis{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px;margin:8px 0 22px}
+.kpi{background:var(--carte);border:1px solid var(--bord);border-radius:14px;padding:14px 16px}
+.kpi b{display:block;font-size:1.7rem;line-height:1.25}
+.kpi span{font-size:.82rem;color:var(--doux)}
+.bloc{background:var(--carte);border:1px solid var(--bord);border-radius:14px;padding:18px 20px;margin-bottom:16px}
+.bloc h3{margin:.1rem 0 .5rem;font-size:1.1rem}
+.deux{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;margin-bottom:16px}
+.deux .bloc{margin-bottom:0}
+.fort{border-top:5px solid #2f9e44}.faible{border-top:5px solid #e8590c}
+.bloc ul{margin:.3rem 0;padding-inline-start:1.2rem}
+.scroll{overflow-x:auto}
+table.comp{width:100%;border-collapse:collapse;font-size:.9rem}
+table.comp th,table.comp td{padding:8px 10px;border-bottom:1px solid var(--bord);text-align:start}
+.legende{display:flex;gap:14px;flex-wrap:wrap;font-size:.85rem;margin-top:6px}
+.legende i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-inline-end:6px}
+.note{font-size:.82rem;color:var(--doux)}
+
+table.mac{width:100%;border-collapse:collapse;font-size:.9rem}
+table.mac th,table.mac td{padding:9px 8px;border-bottom:1px solid var(--bord);text-align:end;white-space:nowrap}
+table.mac th:first-child,table.mac td:first-child{text-align:start;position:sticky;inset-inline-start:0;background:var(--carte)}
+table.mac th{cursor:pointer;font-size:.78rem;text-transform:uppercase;letter-spacing:.04em;color:var(--doux)}
+table.mac td.ok{color:var(--hausse);font-weight:600}table.mac td.warn{color:#c77700;font-weight:600}table.mac td.bad{color:var(--baisse);font-weight:600}
+.scroll{overflow-x:auto}
+.note{font-size:.82rem;color:var(--doux)}
+.kg{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;margin:8px 0 18px}
+.kc{background:var(--carte);border:1px solid var(--bord);border-radius:12px;padding:12px 14px}
+.kc small{display:block;color:var(--doux);font-size:.76rem}.kc b{display:block;font-size:1.3rem}
+</style></head><body><div class="menu"><div class="wrap"><a class="marque" href="index.html">Le Bulletin Économique</a><a href="index.html">Accueil</a><a href="2026-11-19-fr.html">Actualité du jour</a><a href="management.html">Management</a><a href="grh.html">GRH</a><a href="economie.html">Économie</a><a href="programme.html">Programme</a><a href="analyseur.html">Analyseur financier</a><a href="fiscalite.html">Fiscalité</a><a href="archives.html">Archives</a></div></div><div class="macro" id="mc" hidden></div><div class="ticker" id="tk" hidden></div><header><div class="wrap"><h1 class="site">Indicateurs</h1><p class="sous">Les chiffres clés de l'économie mondiale et de chaque pays</p><div class="langues"><a href="index.html">Accueil</a><a href="programme.html">Programme</a></div></div></header><details class="panneau-mobile" id="pm" hidden></details><div class="mise"><aside class="cote" id="cg"></aside><main><div class="wrap"><span class="tag" style="--c:#f08c00">Indicateurs</span><h2 style="font-size:1.7rem;line-height:1.3;margin:.5rem 0">Le monde en chiffres</h2><p class="chapeau">Croissance, inflation, chômage, dette publique et solde budgétaire : les grands indicateurs de 37 pays, comparés en un coup d'œil.</p><div class="kg"><div class="kc"><small>Croissance mondiale (2026)</small><b>+3,1 %</b></div><div class="kc"><small>Inflation mondiale (2026)</small><b>4,7 %</b></div></div><div class="bloc"><div class="scroll"><table class="mac"><thead><tr><th>Pays</th><th>PIB (Md $)</th><th>Croissance</th><th>Inflation</th><th>Chômage</th><th>Dette publique (% PIB)</th><th>Solde budgétaire (% PIB)</th></tr></thead><tbody><tr><td><b>Monde</b></td><td data-v="128003.776">128 004</td><td class="ok" data-v="3.1">+3,1 %</td><td class="warn" data-v="4.7">4,7 %</td><td data-v="-1e9">n.d.</td><td class="bad" data-v="94.6">95 %</td><td class="warn" data-v="-5.5">-5,5 %</td></tr><tr><td><b>Afrique du Sud</b></td><td data-v="489.083">489</td><td class="warn" data-v="1.0">+1,0 %</td><td class="warn" data-v="4.4">4,4 %</td><td class="bad" data-v="33.2">33,2 %</td><td class="warn" data-v="78.0">78 %</td><td class="warn" data-v="-4.4">-4,4 %</td></tr><tr><td><b>Allemagne</b></td><td data-v="5471.299">5 471</td><td class="warn" data-v="1.3">+1,3 %</td><td class="ok" data-v="2.7">2,7 %</td><td class="ok" data-v="4.0">4,0 %</td><td class="warn" data-v="64.6">65 %</td><td class="warn" data-v="-4.3">-4,3 %</td></tr><tr><td><b>Arabie saoudite</b></td><td data-v="1343.346">1 343</td><td class="bad" data-v="-3.3">-3,3 %</td><td class="ok" data-v="1.9">1,9 %</td><td class="ok" data-v="3.2">3,2 %</td><td class="ok" data-v="35.4">35 %</td><td class="bad" data-v="-6.5">-6,5 %</td></tr><tr><td><b>Argentine</b></td><td data-v="768.206">768</td><td class="warn" data-v="2.1">+2,1 %</td><td class="bad" data-v="32.5">32,5 %</td><td class="warn" data-v="7.6">7,6 %</td><td class="warn" data-v="69.3">69 %</td><td class="ok" data-v="0.4">+0,4 %</td></tr><tr><td><b>Australie</b></td><td data-v="2110.657">2 111</td><td class="warn" data-v="1.9">+1,9 %</td><td class="warn" data-v="3.9">3,9 %</td><td class="ok" data-v="4.4">4,4 %</td><td class="ok" data-v="52.6">53 %</td><td class="warn" data-v="-3.2">-3,2 %</td></tr><tr><td><b>Brésil</b></td><td data-v="2654.761">2 655</td><td class="warn" data-v="2.2">+2,2 %</td><td class="warn" data-v="4.4">4,4 %</td><td class="warn" data-v="6.2">6,2 %</td><td class="bad" data-v="97.0">97 %</td><td class="bad" data-v="-8.1">-8,1 %</td></tr><tr><td><b>Canada</b></td><td data-v="2490.256">2 490</td><td class="warn" data-v="1.1">+1,1 %</td><td class="ok" data-v="2.8">2,8 %</td><td class="warn" data-v="6.5">6,5 %</td><td class="bad" data-v="115.6">116 %</td><td class="ok" data-v="-2.5">-2,5 %</td></tr><tr><td><b>Chine</b></td><td data-v="21546.403">21 546</td><td class="ok" data-v="4.5">+4,5 %</td><td class="ok" data-v="1.0">1,0 %</td><td class="ok" data-v="5.1">5,1 %</td><td class="bad" data-v="104.4">104 %</td><td class="bad" data-v="-8.0">-8,0 %</td></tr><tr><td><b>Corée du Sud</b></td><td data-v="2245.847">2 246</td><td class="ok" data-v="3.3">+3,3 %</td><td class="ok" data-v="2.7">2,7 %</td><td class="ok" data-v="2.8">2,8 %</td><td class="ok" data-v="47.3">47 %</td><td class="ok" data-v="-1.3">-1,3 %</td></tr><tr><td><b>Côte d&#x27;Ivoire</b></td><td data-v="110.446">110</td><td class="ok" data-v="6.0">+6,0 %</td><td class="ok" data-v="2.2">2,2 %</td><td data-v="-1e9">n.d.</td><td class="ok" data-v="57.8">58 %</td><td class="warn" data-v="-3.8">-3,8 %</td></tr><tr><td><b>Danemark</b></td><td data-v="499.354">499</td><td class="ok" data-v="3.7">+3,7 %</td><td class="ok" data-v="1.8">1,8 %</td><td class="ok" data-v="3.0">3,0 %</td><td class="ok" data-v="26.4">26 %</td><td class="ok" data-v="1.2">+1,2 %</td></tr><tr><td><b>Espagne</b></td><td data-v="2085.276">2 085</td><td class="warn" data-v="2.5">+2,5 %</td><td class="warn" data-v="3.7">3,7 %</td><td class="warn" data-v="9.8">9,8 %</td><td class="bad" data-v="97.6">98 %</td><td class="ok" data-v="-2.4">-2,4 %</td></tr><tr><td><b>Finlande</b></td><td data-v="338.564">339</td><td class="warn" data-v="1.7">+1,7 %</td><td class="ok" data-v="2.4">2,4 %</td><td class="warn" data-v="10.2">10,2 %</td><td class="bad" data-v="90.6">91 %</td><td class="warn" data-v="-4.2">-4,2 %</td></tr><tr><td><b>France</b></td><td data-v="3554.155">3 554</td><td class="bad" data-v="0.4">+0,4 %</td><td class="ok" data-v="2.4">2,4 %</td><td class="warn" data-v="8.4">8,4 %</td><td class="bad" data-v="118.5">118 %</td><td class="warn" data-v="-5.4">-5,4 %</td></tr><tr><td><b>Inde</b></td><td data-v="4060.207">4 060</td><td class="ok" data-v="7.0">+7,0 %</td><td class="warn" data-v="5.0">5,0 %</td><td class="ok" data-v="5.0">5,0 %</td><td class="warn" data-v="83.1">83 %</td><td class="bad" data-v="-7.5">-7,5 %</td></tr><tr><td><b>Indonésie</b></td><td data-v="1479.954">1 480</td><td class="ok" data-v="5.1">+5,1 %</td><td class="warn" data-v="3.3">3,3 %</td><td class="ok" data-v="4.7">4,7 %</td><td class="ok" data-v="41.7">42 %</td><td class="ok" data-v="-2.9">-2,9 %</td></tr><tr><td><b>Italie</b></td><td data-v="2701.737">2 702</td><td class="bad" data-v="0.8">+0,8 %</td><td class="warn" data-v="3.3">3,3 %</td><td class="ok" data-v="5.6">5,6 %</td><td class="bad" data-v="137.9">138 %</td><td class="ok" data-v="-2.9">-2,9 %</td></tr><tr><td><b>Japon</b></td><td data-v="4341.986">4 342</td><td class="bad" data-v="0.7">+0,7 %</td><td class="ok" data-v="2.0">2,0 %</td><td class="ok" data-v="2.5">2,5 %</td><td class="bad" data-v="199.4">199 %</td><td class="ok" data-v="-1.4">-1,4 %</td></tr><tr><td><b>Malaisie</b></td><td data-v="547.1">547</td><td class="ok" data-v="5.2">+5,2 %</td><td class="ok" data-v="2.2">2,2 %</td><td class="ok" data-v="3.0">3,0 %</td><td class="warn" data-v="69.2">69 %</td><td class="warn" data-v="-3.5">-3,5 %</td></tr><tr><td><b>Maroc</b></td><td data-v="195.632">196</td><td class="ok" data-v="4.5">+4,5 %</td><td class="ok" data-v="0.9">0,9 %</td><td class="bad" data-v="12.2">12,2 %</td><td class="warn" data-v="66.6">67 %</td><td class="warn" data-v="-3.9">-3,9 %</td></tr><tr><td><b>Mexique</b></td><td data-v="2176.236">2 176</td><td class="warn" data-v="1.5">+1,5 %</td><td class="warn" data-v="3.8">3,8 %</td><td class="ok" data-v="2.8">2,8 %</td><td class="warn" data-v="62.1">62 %</td><td class="warn" data-v="-4.2">-4,2 %</td></tr><tr><td><b>Nigeria</b></td><td data-v="386.671">387</td><td class="ok" data-v="4.2">+4,2 %</td><td class="bad" data-v="15.6">15,6 %</td><td data-v="-1e9">n.d.</td><td class="ok" data-v="34.6">35 %</td><td class="warn" data-v="-3.3">-3,3 %</td></tr><tr><td><b>Norvège</b></td><td data-v="651.712">652</td><td class="warn" data-v="1.5">+1,5 %</td><td class="warn" data-v="3.2">3,2 %</td><td class="ok" data-v="4.6">4,6 %</td><td class="ok" data-v="40.0">40 %</td><td class="ok" data-v="13.5">+13,5 %</td></tr><tr><td><b>Nouvelle-Zélande</b></td><td data-v="273.395">273</td><td class="warn" data-v="2.0">+2,0 %</td><td class="warn" data-v="4.1">4,1 %</td><td class="ok" data-v="5.4">5,4 %</td><td class="ok" data-v="57.1">57 %</td><td class="warn" data-v="-4.1">-4,1 %</td></tr><tr><td><b>Philippines</b></td><td data-v="501.692">502</td><td class="ok" data-v="3.4">+3,4 %</td><td class="warn" data-v="5.6">5,6 %</td><td class="ok" data-v="5.4">5,4 %</td><td class="warn" data-v="60.5">60 %</td><td class="warn" data-v="-4.2">-4,2 %</td></tr><tr><td><b>Portugal</b></td><td data-v="375.197">375</td><td class="warn" data-v="2.1">+2,1 %</td><td class="warn" data-v="3.2">3,2 %</td><td class="ok" data-v="5.9">5,9 %</td><td class="warn" data-v="85.1">85 %</td><td class="ok" data-v="0.0">0,0 %</td></tr><tr><td><b>Royaume-Uni</b></td><td data-v="4268.446">4 268</td><td class="warn" data-v="1.3">+1,3 %</td><td class="warn" data-v="3.3">3,3 %</td><td class="ok" data-v="5.3">5,3 %</td><td class="bad" data-v="102.0">102 %</td><td class="warn" data-v="-3.8">-3,8 %</td></tr><tr><td><b>Russie</b></td><td data-v="2861.156">2 861</td><td class="bad" data-v="0.9">+0,9 %</td><td class="warn" data-v="6.1">6,1 %</td><td class="ok" data-v="2.2">2,2 %</td><td class="ok" data-v="19.3">19 %</td><td class="warn" data-v="-3.2">-3,2 %</td></tr><tr><td><b>Suisse</b></td><td data-v="1135.739">1 136</td><td class="warn" data-v="1.9">+1,9 %</td><td class="ok" data-v="0.7">0,7 %</td><td class="ok" data-v="3.0">3,0 %</td><td class="ok" data-v="38.3">38 %</td><td class="ok" data-v="-0.2">-0,2 %</td></tr><tr><td><b>Suède</b></td><td data-v="745.081">745</td><td class="warn" data-v="2.5">+2,5 %</td><td class="ok" data-v="1.1">1,1 %</td><td class="warn" data-v="8.5">8,5 %</td><td class="ok" data-v="35.1">35 %</td><td class="ok" data-v="-2.5">-2,5 %</td></tr><tr><td><b>Sénégal</b></td><td data-v="37.076">37</td><td class="ok" data-v="6.7">+6,7 %</td><td class="ok" data-v="1.4">1,4 %</td><td data-v="-1e9">n.d.</td><td class="bad" data-v="127.7">128 %</td><td class="bad" data-v="-6.4">-6,4 %</td></tr><tr><td><b>Thaïlande</b></td><td data-v="599.115">599</td><td class="warn" data-v="2.1">+2,1 %</td><td class="ok" data-v="2.1">2,1 %</td><td class="ok" data-v="1.0">1,0 %</td><td class="warn" data-v="67.2">67 %</td><td class="warn" data-v="-3.3">-3,3 %</td></tr><tr><td><b>Tunisie</b></td><td data-v="62.738">63</td><td class="warn" data-v="2.4">+2,4 %</td><td class="warn" data-v="5.5">5,5 %</td><td class="bad" data-v="15.2">15,2 %</td><td class="warn" data-v="86.1">86 %</td><td class="bad" data-v="-8.6">-8,6 %</td></tr><tr><td><b>Turquie</b></td><td data-v="1817.987">1 818</td><td class="warn" data-v="2.7">+2,7 %</td><td class="bad" data-v="31.2">31,2 %</td><td class="warn" data-v="8.2">8,2 %</td><td class="ok" data-v="22.5">22 %</td><td class="warn" data-v="-3.1">-3,1 %</td></tr><tr><td><b>Uruguay</b></td><td data-v="95.155">95</td><td class="warn" data-v="1.3">+1,3 %</td><td class="warn" data-v="4.0">4,0 %</td><td class="warn" data-v="7.5">7,5 %</td><td class="warn" data-v="67.7">68 %</td><td class="warn" data-v="-4.1">-4,1 %</td></tr><tr><td><b>Égypte</b></td><td data-v="442.886">443</td><td class="ok" data-v="5.1">+5,1 %</td><td class="bad" data-v="13.3">13,3 %</td><td class="warn" data-v="7.3">7,3 %</td><td class="warn" data-v="84.0">84 %</td><td class="bad" data-v="-11.4">-11,4 %</td></tr><tr><td><b>États-Unis</b></td><td data-v="32642.373">32 642</td><td class="warn" data-v="2.3">+2,3 %</td><td class="warn" data-v="3.6">3,6 %</td><td class="ok" data-v="4.2">4,2 %</td><td class="bad" data-v="126.8">127 %</td><td class="bad" data-v="-8.5">-8,5 %</td></tr></tbody></table></div><p class="note">Touchez un titre de colonne pour trier. Couleurs indicatives : vert = niveau confortable, orange = vigilance, rouge = niveau préoccupant (repères usuels : inflation au plus 3 %, dette au plus 60 % du PIB, déficit au plus 3 % du PIB).</p></div><div class="bloc"><h3>Comment lire ces chiffres</h3><ul><li><b>Croissance</b> : variation annuelle du PIB réel (hors inflation).</li><li><b>Inflation</b> : hausse annuelle moyenne des prix à la consommation.</li><li><b>Chômage</b> : part des actifs sans emploi (non disponible pour tous les pays).</li><li><b>Dette publique</b> : dette brute des administrations publiques, en pourcentage du PIB.</li><li><b>Solde budgétaire</b> : excédent (+) ou déficit (-) des administrations publiques, en pourcentage du PIB.</li></ul><p class="note">Source : FMI, Perspectives de l&#x27;économie mondiale (DataMapper). Les valeurs de 2026 sont des estimations ou des prévisions du FMI et sont révisées régulièrement ; lorsque l'année en cours n'est pas disponible, la dernière valeur connue est affichée. Données à titre informatif.</p></div><script>document.querySelectorAll('table.mac th').forEach(function(th,i){var asc=false;th.addEventListener('click',function(){var tb=th.closest('table').tBodies[0],rows=Array.prototype.slice.call(tb.rows);asc=!asc;rows.sort(function(a,b){if(i===0){return asc?a.cells[0].textContent.localeCompare(b.cells[0].textContent):b.cells[0].textContent.localeCompare(a.cells[0].textContent)}var x=parseFloat(a.cells[i].dataset.v),y=parseFloat(b.cells[i].dataset.v);return asc?x-y:y-x});rows.forEach(function(r){tb.appendChild(r)})})})</script></div></main><aside class="cote" id="cd"></aside></div><footer><div class="wrap">Contenu généré par IA à partir de sources officielles ; ne constitue pas un conseil en investissement.</div></footer><script>
+(function(){
+function esc(t){return String(t).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+function f(v,d){return Number(v).toLocaleString('fr-FR',{minimumFractionDigits:d,maximumFractionDigits:d})}
+function ouvert(b){var z={NY:['America/New_York',570,960],TYO:['Asia/Tokyo',540,900]}[b];if(!z)return null;
+var o={};new Intl.DateTimeFormat('en-US',{timeZone:z[0],weekday:'short',hour:'numeric',minute:'numeric',hour12:false}).formatToParts(new Date()).forEach(function(x){o[x.type]=x.value});
+var m=(parseInt(o.hour,10)%24)*60+parseInt(o.minute,10);return ['Sat','Sun'].indexOf(o.weekday)<0&&m>=z[1]&&m<z[2]}
+function spark(s){if(!s||s.length<2)return '';var mn=Math.min.apply(null,s),mx=Math.max.apply(null,s),r=(mx-mn)||1,p=s.map(function(v,i){return (i*56/(s.length-1)).toFixed(1)+','+(18-(v-mn)/r*16).toFixed(1)}).join(' ');
+return '<svg width="56" height="20" viewBox="0 0 56 20" aria-hidden="true"><polyline points="'+p+'" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>'}
+function info(it){var pts=it.unite==='%',v=pts?it.variation_pts:it.variation_pct,c=Math.abs(v)<0.005?'flat':(v>0?'up':'down'),a=c==='up'?'\u25B2':(c==='down'?'\u25BC':'\u2013'),
+t=(v>0?'+':'')+f(v,2)+(pts?' pt':' %');return {c:c,a:a,t:t,val:f(it.valeur,it.dec)+(it.unite==='%'?' %':'')}}
+function ligne(it){var i=info(it),o=ouvert(it.bourse),p=o===null?'':'<span class="pastille'+(o?' ouvert':'')+'" title="'+(o?'Séance en cours':'Marché fermé')+'"></span>';
+return '<div class="lig '+i.c+'"><div class="nm">'+p+esc(it.nom)+'<small>'+esc(it.pays)+'</small></div>'+spark(it.serie)+'<div class="vl">'+i.val+'<span class="vr"><span aria-hidden="true">'+i.a+'</span> '+i.t+'</span></div></div>'}
+function tuile(it){var i=info(it);return '<div class="tuile '+i.c+'"><small>'+esc(it.nom)+'</small><b>'+i.val+'</b><span><span aria-hidden="true">'+i.a+'</span> '+i.t+'</span></div>'}
+function bloc(g,mode){return '<h4>'+esc(g.titre)+'</h4>'+(mode==='liste'?g.items.map(ligne).join(''):'<div class="tuiles">'+g.items.map(tuile).join('')+'</div>')}
+fetch('data/marches.json',{cache:'no-cache'}).then(function(r){return r.ok?r.json():null}).then(function(d){
+if(!d||!d.groupes)return;var G={};d.groupes.forEach(function(g){G[g.cle]=g});
+var m=new Date(d.maj),h=isNaN(m)?'':m.toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}),vieux=!isNaN(m)&&(Date.now()-m)>36*3600*1000;
+var pied='<div class="maj">'+(vieux?'Données anciennes. ':'')+'Mise à jour : '+h+'. '+esc(d.sources||'')+'</div>';
+var gauche=['indices','taux'].filter(function(k){return G[k]}).map(function(k){return bloc(G[k],'liste')}).join('');
+var droite=['matieres','metaux','devises'].filter(function(k){return G[k]}).map(function(k){return bloc(G[k],'tuiles')}).join('');
+var cg=document.getElementById('cg'),cd=document.getElementById('cd'),pm=document.getElementById('pm'),tk=document.getElementById('tk');
+if(cg)cg.innerHTML=gauche+pied;if(cd)cd.innerHTML=droite+pied;
+if(pm){pm.innerHTML='<summary>Marchés : indices, matières premières, devises</summary>'+gauche+droite+pied;pm.hidden=false}
+var tous=[];d.groupes.forEach(function(g){tous=tous.concat(g.items)});
+var seg=tous.map(function(it){var i=info(it);return '<span class="tk '+i.c+'"><b>'+esc(it.nom)+'</b> '+i.val+' <span aria-hidden="true">'+i.a+'</span> '+i.t+'</span>'}).join('');
+if(tk&&seg){tk.innerHTML='<div class="piste">'+seg+seg+'</div>';tk.hidden=false}
+}).catch(function(){});
+})();
+</script><script>
+(function(){
+function esc(t){return String(t).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+function f(v,d){return Number(v).toLocaleString('fr-FR',{minimumFractionDigits:d,maximumFractionDigits:d})}
+function sg(v,d){return (v>0?'+':'')+f(v,d)}
+fetch('data/macro.json',{cache:'no-cache'}).then(function(r){return r.ok?r.json():null}).then(function(d){
+var mc=document.getElementById('mc');if(!d||!d.lignes||!d.lignes.length||!mc)return;
+function item(l){var p=[];
+if(l.croissance)p.push('<span class="'+(l.croissance.v>=0?'up':'down')+'">Croissance '+sg(l.croissance.v,1)+' %</span>');
+if(l.inflation)p.push('Inflation '+f(l.inflation.v,1)+' %');
+if(l.chomage)p.push('Chômage '+f(l.chomage.v,1)+' %');
+if(l.dette)p.push('Dette publique '+f(l.dette.v,0)+' % du PIB');
+if(l.solde)p.push('<span class="'+(l.solde.v>=0?'up':'down')+'">Solde budgétaire '+sg(l.solde.v,1)+' % du PIB</span>');
+return p.length?'<span class="mi"><b>'+esc(l.nom)+'</b> '+p.join(' · ')+'</span>':''}
+var seg=d.lignes.map(item).join('');if(!seg)return;
+var tete='<a class="mlabel" href="macro.html">Le monde en chiffres ('+esc(d.annee)+', prévisions FMI) &rsaquo;</a>';
+mc.style.setProperty('--dur',Math.max(120,d.lignes.length*9)+'s');
+mc.innerHTML='<div class="piste">'+tete+seg+tete+seg+'</div>';mc.hidden=false;
+}).catch(function(){});
+})();
+</script></body></html>
