@@ -26,5 +26,12 @@
   "description": "analyses macro et microéconomiques tirées d'articles scientifiques récents",
   "page": "economie.html",
   "couleur": "#2f9e44"
+ },
+ {
+  "cle": "programme",
+  "nom": "Programme",
+  "description": "le menu du jour et les sujets de la semaine et du mois",
+  "page": "programme.html",
+  "couleur": "#c2255c"
  }
 ]
