@@ -1,12 +1,5 @@
 [
  {
-  "cle": "analyseur",
-  "nom": "Analyseur financier",
-  "description": "outil en ligne : ratios, équilibre financier, diagnostic et valorisation de votre entreprise",
-  "page": "analyseur.html",
-  "couleur": "#364fc7"
- },
- {
   "cle": "fiscalite",
   "nom": "Fiscalité",
   "description": "une analyse par pays chaque semaine, avec lecture historique et comparaison internationale",
@@ -33,6 +26,13 @@
   "description": "les préoccupations des entreprises en ressources humaines, éclairées par la recherche, avec des solutions",
   "page": "grh.html",
   "couleur": "#0b7285"
+ },
+ {
+  "cle": "analyseur",
+  "nom": "Analyseur financier",
+  "description": "outil en ligne : ratios, équilibre financier, diagnostic et valorisation de votre entreprise",
+  "page": "analyseur.html",
+  "couleur": "#364fc7"
  },
  {
   "cle": "economie",
