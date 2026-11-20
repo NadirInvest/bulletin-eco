@@ -17,7 +17,9 @@ URL = "https://www.imf.org/external/datamapper/api/v1/{ind}"
 
 # code FMI, clé interne
 INDICATEURS = [("NGDP_RPCH", "croissance"), ("PCPIPCH", "inflation"), ("LUR", "chomage"),
-               ("GGXWDG_NGDP", "dette"), ("GGXCNL_NGDP", "solde"), ("NGDPD", "pib")]
+               ("GGXWDG_NGDP", "dette"), ("GGXCNL_NGDP", "solde"), ("BCA_NGDPD", "compte"), ("NGDPD", "pib")]
+# Balance commerciale (biens et services, % du PIB) : Banque mondiale, dernière année disponible
+WB_COMMERCE = "NE.RSB.GNFS.ZS"
 PAYS = {"WEOWORLD": "Monde", **rf.PAYS}
 
 EXTRA_CSS = """
@@ -50,6 +52,47 @@ def choisir(serie, annee):
     return None
 
 
+def fetch_commerce():
+    """Balance commerciale (% du PIB) : dernière valeur disponible par pays (Banque mondiale)."""
+    isos = ";".join(i for i in PAYS if i != "WEOWORLD")
+    r = requests.get(f"https://api.worldbank.org/v2/country/{isos}/indicator/{WB_COMMERCE}",
+                     params={"format": "json", "per_page": 3000, "date": "2018:2026"}, timeout=60)
+    r.raise_for_status()
+    donnees = r.json()
+    dernier = {}
+    if isinstance(donnees, list) and len(donnees) > 1 and donnees[1]:
+        for o in donnees[1]:
+            if o.get("value") is None:
+                continue
+            iso, a = o.get("countryiso3code"), int(o["date"])
+            if iso and (iso not in dernier or a > dernier[iso]["a"]):
+                dernier[iso] = {"v": float(o["value"]), "a": a}
+    return dernier
+
+
+def signe(v, d=1):
+    return ("+" if v > 0 else "") + fmt(v, d)
+
+
+def segments(l):
+    """Textes prêts à afficher dans le bandeau défilant (l'affichage n'a donc pas besoin d'être modifié pour un nouvel indicateur)."""
+    seg = []
+    if "croissance" in l:
+        seg.append({"t": f"Croissance {signe(l['croissance']['v'])} %", "c": "up" if l["croissance"]["v"] >= 0 else "down"})
+    if "inflation" in l:
+        seg.append({"t": f"Inflation {fmt(l['inflation']['v'])} %", "c": ""})
+    if "chomage" in l:
+        seg.append({"t": f"Chômage {fmt(l['chomage']['v'])} %", "c": ""})
+    if "dette" in l:
+        seg.append({"t": f"Dette publique {fmt(l['dette']['v'], 0)} % du PIB", "c": ""})
+    if "solde" in l:
+        seg.append({"t": f"Solde budgétaire {signe(l['solde']['v'])} % du PIB", "c": "up" if l["solde"]["v"] >= 0 else "down"})
+    if "commerce" in l:
+        seg.append({"t": f"Balance commerciale {signe(l['commerce']['v'])} % du PIB ({l['commerce']['a']})",
+                    "c": "up" if l["commerce"]["v"] >= 0 else "down"})
+    return seg
+
+
 def collecter(annee):
     donnees = {iso: {"iso": iso, "nom": nom} for iso, nom in PAYS.items()}
     for code, cle in INDICATEURS:
@@ -65,12 +108,22 @@ def collecter(annee):
                 donnees[iso][cle] = choix
                 trouves += 1
         print(f"  {cle} : {trouves} pays")
-    return [d for d in donnees.values() if any(k in d for _, k in INDICATEURS)]
+    try:
+        for iso, valeur in fetch_commerce().items():
+            if iso in donnees:
+                donnees[iso]["commerce"] = valeur
+        print(f"  commerce : {sum('commerce' in d for d in donnees.values())} pays")
+    except Exception as erreur:
+        print(f"  Banque mondiale (balance commerciale) : {erreur}")
+    lignes = [d for d in donnees.values() if any(k in d for _, k in INDICATEURS) or "commerce" in d]
+    for l in lignes:
+        l["segments"] = segments(l)
+    return lignes
 
 
 def classe(cle, v):
     seuils = {"croissance": (3, 1, False), "inflation": (3, 8, True), "chomage": (6, 12, True),
-              "dette": (60, 90, True), "solde": (-3, -6, False)}
+              "dette": (60, 90, True), "solde": (-3, -6, False), "commerce": (0, -5, False), "compte": (0, -4, False)}
     if cle not in seuils:
         return ""
     ok, warn, inverse = seuils[cle]
@@ -88,7 +141,7 @@ def cellule(l, cle, d=1, signe=False, suffixe=" %"):
     if not x:
         return '<td data-v="-1e9">n.d.</td>'
     txt = (("+" if signe and x["v"] > 0 else "") + fmt(x["v"], d)) + suffixe
-    return f'<td class="{classe(cle, x["v"])}" data-v="{x["v"]}">{txt}</td>'
+    return f'<td class="{classe(cle, x["v"])}" data-v="{x["v"]}" title="Année {x["a"]}">{txt}</td>'
 
 
 def construire(lignes, annee):
@@ -103,7 +156,8 @@ def construire(lignes, annee):
         pib = l.get("pib")
         pib_txt = f'<td data-v="{pib["v"]}">{fmt(pib["v"], 0)}</td>' if pib else '<td data-v="-1e9">n.d.</td>'
         corps += (f'<tr><td><b>{e(l["nom"])}</b></td>{pib_txt}{cellule(l, "croissance", 1, True)}{cellule(l, "inflation")}'
-                  f'{cellule(l, "chomage")}{cellule(l, "dette", 0)}{cellule(l, "solde", 1, True)}</tr>')
+                  f'{cellule(l, "chomage")}{cellule(l, "dette", 0)}{cellule(l, "solde", 1, True)}'
+                  f'{cellule(l, "commerce", 1, True)}{cellule(l, "compte", 1, True)}</tr>')
     script = ("<script>document.querySelectorAll('table.mac th').forEach(function(th,i){var asc=false;th.addEventListener('click',function(){"
               "var tb=th.closest('table').tBodies[0],rows=Array.prototype.slice.call(tb.rows);asc=!asc;"
               "rows.sort(function(a,b){if(i===0){return asc?a.cells[0].textContent.localeCompare(b.cells[0].textContent):b.cells[0].textContent.localeCompare(a.cells[0].textContent)}"
@@ -115,7 +169,8 @@ def construire(lignes, annee):
         f'<p class="chapeau">Croissance, inflation, chômage, dette publique et solde budgétaire : les grands indicateurs de {len(lignes) - 1} pays, comparés en un coup d\'œil.</p>'
         f'<div class="kg">{kpis}</div>'
         '<div class="bloc"><div class="scroll"><table class="mac"><thead><tr><th>Pays</th><th>PIB (Md $)</th><th>Croissance</th>'
-        '<th>Inflation</th><th>Chômage</th><th>Dette publique (% PIB)</th><th>Solde budgétaire (% PIB)</th></tr></thead>'
+        '<th>Inflation</th><th>Chômage</th><th>Dette publique (% PIB)</th><th>Solde budgétaire (% PIB)</th>'
+        '<th>Balance commerciale (% PIB)</th><th>Compte courant (% PIB)</th></tr></thead>'
         f'<tbody>{corps}</tbody></table></div>'
         '<p class="note">Touchez un titre de colonne pour trier. Couleurs indicatives : '
         'vert = niveau confortable, orange = vigilance, rouge = niveau préoccupant (repères usuels : inflation au plus 3 %, '
@@ -125,8 +180,10 @@ def construire(lignes, annee):
         '<li><b>Inflation</b> : hausse annuelle moyenne des prix à la consommation.</li>'
         '<li><b>Chômage</b> : part des actifs sans emploi (non disponible pour tous les pays).</li>'
         '<li><b>Dette publique</b> : dette brute des administrations publiques, en pourcentage du PIB.</li>'
-        '<li><b>Solde budgétaire</b> : excédent (+) ou déficit (-) des administrations publiques, en pourcentage du PIB.</li></ul>'
-        f'<p class="note">Source : {e(SOURCE)}. Les valeurs de {annee} sont des estimations ou des prévisions du FMI et sont révisées régulièrement ; '
+        '<li><b>Solde budgétaire</b> : excédent (+) ou déficit (-) des administrations publiques, en pourcentage du PIB.</li>'
+        '<li><b>Balance commerciale</b> : exportations moins importations de biens et de services, en pourcentage du PIB ; positive, c\'est un excédent, négative un déficit.</li>'
+        '<li><b>Compte courant</b> : solde des échanges de biens, de services, de revenus et de transferts avec le reste du monde, en pourcentage du PIB.</li></ul>'
+        f'<p class="note">Sources : {e(SOURCE)} ; Banque mondiale pour la balance commerciale (dernière année disponible, survolez la valeur pour voir l\'année). Les valeurs de {annee} du FMI sont des estimations ou des prévisions et sont révisées régulièrement ; '
         'lorsque l\'année en cours n\'est pas disponible, la dernière valeur connue est affichée. Données à titre informatif.</p></div>'
         + script
     )

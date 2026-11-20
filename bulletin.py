@@ -316,6 +316,7 @@ function sg(v,d){return (v>0?'+':'')+f(v,d)}
 fetch('data/macro.json',{cache:'no-cache'}).then(function(r){return r.ok?r.json():null}).then(function(d){
 var mc=document.getElementById('mc');if(!d||!d.lignes||!d.lignes.length||!mc)return;
 function item(l){var p=[];
+if(l.segments&&l.segments.length){return '<span class="mi"><b>'+esc(l.nom)+'</b> '+l.segments.map(function(x){return x.c?'<span class="'+x.c+'">'+esc(x.t)+'</span>':esc(x.t)}).join(' · ')+'</span>'}
 if(l.croissance)p.push('<span class="'+(l.croissance.v>=0?'up':'down')+'">Croissance '+sg(l.croissance.v,1)+' %</span>');
 if(l.inflation)p.push('Inflation '+f(l.inflation.v,1)+' %');
 if(l.chomage)p.push('Chômage '+f(l.chomage.v,1)+' %');
