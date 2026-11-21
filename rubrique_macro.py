@@ -38,10 +38,53 @@ table.mac td.ok{color:var(--hausse);font-weight:600}table.mac td.warn{color:#c77
 bulletin.CSS = bulletin.CSS + EXTRA_CSS
 
 
+HEADERS = {"User-Agent": "Mozilla/5.0 (compatible; BulletinEco/1.0; +https://nadirinvest.github.io/bulletin-eco/)",
+           "Accept": "application/json"}
+# Source de secours : Banque mondiale (même indicateur, dernière année disponible)
+WB_CODES = {"croissance": "NY.GDP.MKTP.KD.ZG", "inflation": "FP.CPI.TOTL.ZG", "chomage": "SL.UEM.TOTL.ZS",
+            "dette": "GC.DOD.TOTL.GD.ZS", "solde": "GC.NLD.TOTL.GD.ZS", "compte": "BN.CAB.XOKA.GD.ZS", "pib": "NY.GDP.MKTP.CD"}
+
+
 def fetch(indicateur, annees):
-    r = requests.get(URL.format(ind=indicateur), params={"periods": ",".join(str(a) for a in annees)}, timeout=60)
+    """FMI DataMapper. Plusieurs tentatives : virgules non encodées, puis sans filtre d'années (le serveur renvoie alors toutes les années)."""
+    base = URL.format(ind=indicateur)
+    essais = [f"{base}?periods={','.join(str(a) for a in annees)}", base]
+    derniere = None
+    for url in essais:
+        try:
+            r = requests.get(url, headers=HEADERS, timeout=90)
+            if r.status_code != 200:
+                derniere = f"HTTP {r.status_code} : {str(r.text)[:100]}"
+                continue
+            valeurs = r.json().get("values", {}).get(indicateur, {})
+            if valeurs:
+                return {iso: {a: v for a, v in serie.items() if a.isdigit() and int(a) >= min(annees)} for iso, serie in valeurs.items()}
+            derniere = "réponse vide"
+        except ValueError:
+            derniere = "réponse non JSON"
+        except requests.exceptions.RequestException as erreur:
+            derniere = str(erreur)[:120]
+    raise RuntimeError(derniere or "échec")
+
+
+def fetch_wb(code, depuis=2019):
+    """Dernière valeur disponible par pays (Banque mondiale) : {iso: {"v": valeur, "a": année}}."""
+    wb_iso = {("WLD" if iso == "WEOWORLD" else iso): iso for iso in PAYS}
+    r = requests.get(f"https://api.worldbank.org/v2/country/{';'.join(wb_iso)}/indicator/{code}",
+                     params={"format": "json", "per_page": 4000, "date": f"{depuis}:{datetime.date.today().year}"},
+                     headers=HEADERS, timeout=60)
     r.raise_for_status()
-    return r.json().get("values", {}).get(indicateur, {})
+    donnees = r.json()
+    dernier = {}
+    if isinstance(donnees, list) and len(donnees) > 1 and donnees[1]:
+        for o in donnees[1]:
+            if o.get("value") is None:
+                continue
+            iso = wb_iso.get(o.get("countryiso3code"))
+            a = int(o["date"])
+            if iso and (iso not in dernier or a > dernier[iso]["a"]):
+                dernier[iso] = {"v": float(o["value"]), "a": a}
+    return dernier
 
 
 def choisir(serie, annee):
@@ -55,20 +98,7 @@ def choisir(serie, annee):
 
 def fetch_commerce():
     """Balance commerciale (% du PIB) : dernière valeur disponible par pays (Banque mondiale)."""
-    isos = ";".join(i for i in PAYS if i != "WEOWORLD")
-    r = requests.get(f"https://api.worldbank.org/v2/country/{isos}/indicator/{WB_COMMERCE}",
-                     params={"format": "json", "per_page": 3000, "date": "2018:2026"}, timeout=60)
-    r.raise_for_status()
-    donnees = r.json()
-    dernier = {}
-    if isinstance(donnees, list) and len(donnees) > 1 and donnees[1]:
-        for o in donnees[1]:
-            if o.get("value") is None:
-                continue
-            iso, a = o.get("countryiso3code"), int(o["date"])
-            if iso and (iso not in dernier or a > dernier[iso]["a"]):
-                dernier[iso] = {"v": float(o["value"]), "a": a}
-    return dernier
+    return {iso: v for iso, v in fetch_wb(WB_COMMERCE, 2018).items() if iso != "WEOWORLD"}
 
 
 def signe(v, d=1):
@@ -115,22 +145,32 @@ def charger_anciens():
 def collecter(annee):
     donnees = {iso: {"iso": iso, "nom": nom} for iso, nom in PAYS.items()}
     for code, cle in INDICATEURS:
+        trouves = 0
         try:
             valeurs = fetch(code, [annee - 2, annee - 1, annee])
+            for iso in PAYS:
+                choix = choisir(valeurs.get(iso, {}), annee)
+                if choix:
+                    choix["s"] = "FMI"
+                    donnees[iso][cle] = choix
+                    trouves += 1
+            print(f"  {cle} : {trouves} pays (FMI)")
         except Exception as erreur:
             print(f"  FMI {code} : {erreur}")
-            continue
-        trouves = 0
-        for iso in PAYS:
-            choix = choisir(valeurs.get(iso, {}), annee)
-            if choix:
-                donnees[iso][cle] = choix
-                trouves += 1
-        print(f"  {cle} : {trouves} pays")
+        if trouves < 15 and cle in WB_CODES:  # le FMI n'a pas répondu : source de secours
+            try:
+                ajoutes = 0
+                for iso, val in fetch_wb(WB_CODES[cle]).items():
+                    if cle not in donnees[iso]:
+                        donnees[iso][cle] = {"v": val["v"] / 1e9 if cle == "pib" else val["v"], "a": val["a"], "s": "BM"}
+                        ajoutes += 1
+                print(f"  {cle} : {ajoutes} pays complétés par la Banque mondiale (secours)")
+            except Exception as erreur:
+                print(f"  Banque mondiale {WB_CODES[cle]} : {erreur}")
     try:
         for iso, valeur in fetch_commerce().items():
             if iso in donnees:
-                donnees[iso]["commerce"] = valeur
+                donnees[iso]["commerce"] = {**valeur, "s": "BM"}
         print(f"  commerce : {sum('commerce' in d for d in donnees.values())} pays")
     except Exception as erreur:
         print(f"  Banque mondiale (balance commerciale) : {erreur}")
@@ -169,10 +209,11 @@ def cellule(l, cle, d=1, signe=False, suffixe=" %"):
     if not x:
         return '<td data-v="-1e9">n.d.</td>'
     txt = (("+" if signe and x["v"] > 0 else "") + fmt(x["v"], d)) + suffixe
-    return f'<td class="{classe(cle, x["v"])}" data-v="{x["v"]}">{txt} <small class="an">{x["a"]}</small></td>'
+    src = "Banque mondiale" if x.get("s") == "BM" else "FMI"
+    return f'<td class="{classe(cle, x["v"])}" data-v="{x["v"]}" title="Source : {src}, année {x["a"]}">{txt} <small class="an">{x["a"]}</small></td>'
 
 
-def construire(lignes, annee):
+def construire(lignes, annee, maj=""):
     monde = next((l for l in lignes if l["iso"] == "WEOWORLD"), None)
     kpis = ""
     if monde:
@@ -213,7 +254,7 @@ def construire(lignes, annee):
         '<li><b>Compte courant</b> : solde des échanges de biens, de services, de revenus et de transferts avec le reste du monde, en pourcentage du PIB.</li></ul>'
         f'<p class="note">Sources : {e(SOURCE)} ; Banque mondiale pour la balance commerciale. '
         'Chaque valeur correspond à la dernière année disponible chez la source : l\'année est indiquée à côté de la valeur. '
-        'Les données les plus récentes peuvent être des estimations, révisées régulièrement. Données à titre informatif.</p></div>'
+        f'Les données les plus récentes peuvent être des estimations, révisées régulièrement. Dernière collecte automatique : {e(maj)}. Données à titre informatif.</p></div>'
         + script
     )
     entete = ('<h1 class="site">Indicateurs</h1><p class="sous">Les chiffres clés de l\'économie mondiale et de chaque pays</p>'
@@ -234,7 +275,7 @@ def main():
     sortie = {"maj": datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="minutes"), "annee": annee,
               "source": SOURCE, "lignes": sorted(lignes, key=lambda x: (x["iso"] != "WEOWORLD", x["nom"]))}
     (data / "macro.json").write_text(json.dumps(sortie, ensure_ascii=False), encoding="utf-8")
-    construire(lignes, annee)
+    construire(lignes, annee, datetime.datetime.now(datetime.timezone.utc).strftime("%d/%m/%Y à %H:%M UTC"))
     bulletin.enregistrer_rubrique("macro", "Indicateurs", "les chiffres clés de l'économie mondiale et de chaque pays",
                                   "macro.html", "#f08c00")
     bulletin.construire_index()

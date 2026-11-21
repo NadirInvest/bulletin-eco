@@ -10,6 +10,7 @@ Chaque cours est indépendant : si une source tombe en panne, les autres s'affic
 import json
 import datetime
 import requests
+from email.utils import parsedate_to_datetime
 import bulletin
 
 GROUPES = [
@@ -50,6 +51,13 @@ FX_SPECS = [
 METAUX = [("XAU", "Or", "$ l'once"), ("XAG", "Argent", "$ l'once"),
           ("XPT", "Platine", "$ l'once"), ("XPD", "Palladium", "$ l'once")]
 
+SOURCES_GROUPES = {
+    "indices": "FRED (Réserve fédérale de St. Louis) : valeurs de clôture",
+    "taux": "FRED : valeur de clôture",
+    "matieres": "FRED : valeurs de clôture (cuivre : mensuel)",
+    "metaux": "gold-api.com",
+    "devises": "Exchange Rate API (taux quotidiens)",
+}
 SOURCES = ("Sources : FRED (Réserve fédérale de St. Louis), Exchange Rate API (exchangerate-api.com), gold-api.com. "
            "Données différées ou de clôture, à titre informatif.")
 
@@ -68,7 +76,7 @@ def charger_historique():
         return {}
 
 
-def avec_historique(base, valeur, hist, aujourd):
+def avec_historique(base, valeur, hist, aujourd, date_obs=None):
     """Variation calculée à partir de notre propre historique quotidien (sources sans variation fournie)."""
     h = hist.setdefault(base["id"], {})
     h[aujourd] = valeur
@@ -81,7 +89,7 @@ def avec_historique(base, valeur, hist, aujourd):
         pct = (valeur / p - 1) * 100 if p else 0.0
         pts = valeur - p
     serie = [h[j] for j in sorted(h)][-14:]
-    return {**base, "valeur": valeur, "variation_pct": pct, "variation_pts": pts, "date": aujourd,
+    return {**base, "valeur": valeur, "variation_pct": pct, "variation_pts": pts, "date": date_obs or aujourd,
             "serie": serie if len(serie) >= 2 else []}
 
 
@@ -120,14 +128,20 @@ def collecter_devises(groupes, hist, aujourd):
     try:
         r = requests.get("https://open.er-api.com/v6/latest/USD", timeout=30)
         r.raise_for_status()
-        taux = r.json()["rates"]
+        donnees = r.json()
+        taux = donnees["rates"]
+        date_obs = None
+        try:  # date de publication des taux par la source
+            date_obs = parsedate_to_datetime(donnees.get("time_last_update_utc", "")).date().isoformat()
+        except Exception:
+            pass
     except Exception as erreur:
         print(f"  Devises : {erreur}")
         return
     for sid, nom, pays, formule, dec in FX_SPECS:
         try:
             base = {"id": sid, "nom": nom, "pays": pays, "unite": "", "dec": dec, "bourse": None}
-            groupes["devises"].append(avec_historique(base, float(formule(taux)), hist, aujourd))
+            groupes["devises"].append(avec_historique(base, float(formule(taux)), hist, aujourd, date_obs))
         except Exception as erreur:
             print(f"  Devise {sid} : {erreur}")
 
@@ -137,9 +151,11 @@ def collecter_metaux(groupes, hist, aujourd):
         try:
             r = requests.get(f"https://api.gold-api.com/price/{symbole}", timeout=30)
             r.raise_for_status()
-            prix = float(r.json()["price"])
+            donnees = r.json()
+            prix = float(donnees["price"])
+            date_obs = str(donnees.get("updatedAt", ""))[:10] or None
             base = {"id": symbole, "nom": nom, "pays": unite, "unite": "$", "dec": 2, "bourse": None}
-            groupes["metaux"].append(avec_historique(base, prix, hist, aujourd))
+            groupes["metaux"].append(avec_historique(base, prix, hist, aujourd, date_obs))
         except Exception as erreur:
             print(f"  Métal {symbole} : {erreur}")
 
@@ -158,7 +174,8 @@ def main():
     if not total:
         raise SystemExit("Aucun cours n'a pu être récupéré.")
     sortie = {"maj": maintenant.isoformat(timespec="minutes"), "sources": SOURCES,
-              "groupes": [{"cle": cle, "titre": titre, "items": groupes[cle]} for cle, titre in GROUPES if groupes[cle]]}
+              "groupes": [{"cle": cle, "titre": titre, "source": SOURCES_GROUPES.get(cle, ""), "items": groupes[cle]}
+                   for cle, titre in GROUPES if groupes[cle]]}
     (data_dir() / "marches.json").write_text(json.dumps(sortie, ensure_ascii=False), encoding="utf-8")
     (data_dir() / "historique.json").write_text(json.dumps(hist, ensure_ascii=False), encoding="utf-8")
     print("Publié : data/marches.json")
