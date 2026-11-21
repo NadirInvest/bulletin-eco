@@ -19,7 +19,9 @@ SOURCES = {
     "BCE": "https://www.ecb.europa.eu/rss/press.html",
     "Fed": "https://www.federalreserve.gov/feeds/press_all.xml",
 }
-LANGUES = {"fr": "Français", "en": "English", "ar": "العربية"}
+# Tout le site (menu, rubriques, outils) est en français : une seule langue est donc proposée pour l'instant.
+# Pour réactiver d'autres langues plus tard, remettre par exemple : "en": "English", "ar": "العربية"
+LANGUES = {"fr": "Français"}
 LANGUE_PROMPT = {"fr": "français", "en": "English", "ar": "arabe (العربية)"}
 MAX_ITEMS_PAR_SOURCE = 6
 MAX_ARTICLES = 5
@@ -316,7 +318,7 @@ function sg(v,d){return (v>0?'+':'')+f(v,d)}
 fetch('data/macro.json',{cache:'no-cache'}).then(function(r){return r.ok?r.json():null}).then(function(d){
 var mc=document.getElementById('mc');if(!d||!d.lignes||!d.lignes.length||!mc)return;
 function item(l){var p=[];
-if(l.segments&&l.segments.length){return '<span class="mi"><b>'+esc(l.nom)+'</b> '+l.segments.map(function(x){return x.c?'<span class="'+x.c+'">'+esc(x.t)+'</span>':esc(x.t)}).join(' · ')+'</span>'}
+if(l.segments&&l.segments.length){return '<span class="mi"><b>'+esc(l.libelle||l.nom)+'</b> '+l.segments.map(function(x){return x.c?'<span class="'+x.c+'">'+esc(x.t)+'</span>':esc(x.t)}).join(' · ')+'</span>'}
 if(l.croissance)p.push('<span class="'+(l.croissance.v>=0?'up':'down')+'">Croissance '+sg(l.croissance.v,1)+' %</span>');
 if(l.inflation)p.push('Inflation '+f(l.inflation.v,1)+' %');
 if(l.chomage)p.push('Chômage '+f(l.chomage.v,1)+' %');
@@ -324,7 +326,7 @@ if(l.dette)p.push('Dette publique '+f(l.dette.v,0)+' % du PIB');
 if(l.solde)p.push('<span class="'+(l.solde.v>=0?'up':'down')+'">Solde budgétaire '+sg(l.solde.v,1)+' % du PIB</span>');
 return p.length?'<span class="mi"><b>'+esc(l.nom)+'</b> '+p.join(' · ')+'</span>':''}
 var seg=d.lignes.map(item).join('');if(!seg)return;
-var tete='<a class="mlabel" href="macro.html">Le monde en chiffres ('+esc(d.annee)+', prévisions FMI) &rsaquo;</a>';
+var tete='<a class="mlabel" href="macro.html">Le monde en chiffres &middot; dernières données FMI et Banque mondiale &rsaquo;</a>';
 mc.style.setProperty('--dur',Math.max(120,d.lignes.length*9)+'s');
 mc.innerHTML='<div class="piste">'+tete+seg+tete+seg+'</div>';mc.hidden=false;
 }).catch(function(){});
@@ -387,8 +389,9 @@ def page(code, titre_onglet, contenu_header, contenu_nav, contenu_main, descript
 def entete(code, date, actif=None):
     t = TEXTES[code]
     liens = "".join(f'<a class="{"actif" if c == actif else ""}" href="{date}-{c}.html">{e(nom)}</a>' for c, nom in LANGUES.items())
+    selecteur = f'<div class="langues">{liens}</div>' if len(LANGUES) > 1 else ""
     return (f'<h1 class="site">{e(t["site"])}</h1><p class="sous">{e(t["sous"])}</p>'
-            f'<div class="langues">{liens}</div><p class="date">{e(t["edition"])} {e(date)}</p>')
+            f'{selecteur}<p class="date">{e(t["edition"])} {e(date)}</p>')
 
 
 def liens_sources(article, elements, code):
@@ -459,7 +462,7 @@ def editions_par_date():
     par_date = {}
     for f in SORTIE.glob("*.html"):
         m = re.match(r"^(\d{4}-\d{2}-\d{2})-([a-z]{2})\.html$", f.name)
-        if m:
+        if m and m.group(2) in LANGUES:
             par_date.setdefault(m.group(1), {})[m.group(2)] = f.name
     return par_date
 
