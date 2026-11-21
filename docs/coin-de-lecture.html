@@ -82,6 +82,9 @@ footer{padding:26px 0 40px;color:var(--doux);font-size:.85rem;text-align:center}
 .pastille{display:inline-block;width:8px;height:8px;border-radius:50%;margin-inline-end:5px;background:#9aa7b8}
 .pastille.ouvert{background:var(--hausse)}
 .maj{font-size:.72rem;color:var(--doux);margin-top:12px;line-height:1.4}
+.dt{display:block;font-size:.68rem;color:var(--doux);font-weight:400}
+.tuile .dt{color:inherit;opacity:.8}
+.srcg{font-size:.7rem;color:var(--doux);margin:-2px 0 6px}
 
 .macro{overflow:hidden;background:#071a33;color:#e8edf3;white-space:nowrap;border-bottom:1px solid #15508a}
 .macro .piste{display:inline-flex;gap:34px;padding:9px 14px;animation:defile var(--dur,240s) linear infinite}
@@ -139,14 +142,15 @@ function spark(s){if(!s||s.length<2)return '';var mn=Math.min.apply(null,s),mx=M
 return '<svg width="56" height="20" viewBox="0 0 56 20" aria-hidden="true"><polyline points="'+p+'" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>'}
 function info(it){var pts=it.unite==='%',v=pts?it.variation_pts:it.variation_pct,c=Math.abs(v)<0.005?'flat':(v>0?'up':'down'),a=c==='up'?'\u25B2':(c==='down'?'\u25BC':'\u2013'),
 t=(v>0?'+':'')+f(v,2)+(pts?' pt':' %');return {c:c,a:a,t:t,val:f(it.valeur,it.dec)+(it.unite==='%'?' %':'')}}
+function dt(it){if(!it.date)return '';var x=new Date(it.date+'T12:00:00');return isNaN(x)?'':'au '+x.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric'})}
 function ligne(it){var i=info(it),o=ouvert(it.bourse),p=o===null?'':'<span class="pastille'+(o?' ouvert':'')+'" title="'+(o?'Séance en cours':'Marché fermé')+'"></span>';
-return '<div class="lig '+i.c+'"><div class="nm">'+p+esc(it.nom)+'<small>'+esc(it.pays)+'</small></div>'+spark(it.serie)+'<div class="vl">'+i.val+'<span class="vr"><span aria-hidden="true">'+i.a+'</span> '+i.t+'</span></div></div>'}
-function tuile(it){var i=info(it);return '<div class="tuile '+i.c+'"><small>'+esc(it.nom)+'</small><b>'+i.val+'</b><span><span aria-hidden="true">'+i.a+'</span> '+i.t+'</span></div>'}
-function bloc(g,mode){return '<h4>'+esc(g.titre)+'</h4>'+(mode==='liste'?g.items.map(ligne).join(''):'<div class="tuiles">'+g.items.map(tuile).join('')+'</div>')}
+return '<div class="lig '+i.c+'"><div class="nm">'+p+esc(it.nom)+'<small>'+esc(it.pays)+'</small></div>'+spark(it.serie)+'<div class="vl">'+i.val+'<span class="vr"><span aria-hidden="true">'+i.a+'</span> '+i.t+'</span><small class="dt">'+dt(it)+'</small></div></div>'}
+function tuile(it){var i=info(it);return '<div class="tuile '+i.c+'"><small>'+esc(it.nom)+'</small><b>'+i.val+'</b><span><span aria-hidden="true">'+i.a+'</span> '+i.t+'</span><small class="dt">'+dt(it)+'</small></div>'}
+function bloc(g,mode){return '<h4>'+esc(g.titre)+'</h4>'+(g.source?'<div class="srcg">'+esc(g.source)+'</div>':'')+(mode==='liste'?g.items.map(ligne).join(''):'<div class="tuiles">'+g.items.map(tuile).join('')+'</div>')}
 fetch('data/marches.json',{cache:'no-cache'}).then(function(r){return r.ok?r.json():null}).then(function(d){
 if(!d||!d.groupes)return;var G={};d.groupes.forEach(function(g){G[g.cle]=g});
 var m=new Date(d.maj),h=isNaN(m)?'':m.toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}),vieux=!isNaN(m)&&(Date.now()-m)>36*3600*1000;
-var pied='<div class="maj">'+(vieux?'Données anciennes. ':'')+'Mise à jour : '+h+'. '+esc(d.sources||'')+'</div>';
+var pied='<div class="maj">'+(vieux?'Données anciennes. ':'')+'Collecte automatique des données : '+h+'. La date de chaque cours figure sous sa valeur. '+esc(d.sources||'')+'</div>';
 var gauche=['indices','taux'].filter(function(k){return G[k]}).map(function(k){return bloc(G[k],'liste')}).join('');
 var droite=['matieres','metaux','devises'].filter(function(k){return G[k]}).map(function(k){return bloc(G[k],'tuiles')}).join('');
 var cg=document.getElementById('cg'),cd=document.getElementById('cd'),pm=document.getElementById('pm'),tk=document.getElementById('tk');
@@ -173,7 +177,8 @@ if(l.dette)p.push('Dette publique '+f(l.dette.v,0)+' % du PIB');
 if(l.solde)p.push('<span class="'+(l.solde.v>=0?'up':'down')+'">Solde budgétaire '+sg(l.solde.v,1)+' % du PIB</span>');
 return p.length?'<span class="mi"><b>'+esc(l.nom)+'</b> '+p.join(' · ')+'</span>':''}
 var seg=d.lignes.map(item).join('');if(!seg)return;
-var tete='<a class="mlabel" href="macro.html">Le monde en chiffres &middot; dernières données FMI et Banque mondiale &rsaquo;</a>';
+var jd=new Date(d.maj),ds=isNaN(jd)?'':jd.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric'});
+var tete='<a class="mlabel" href="macro.html">Le monde en chiffres &middot; FMI et Banque mondiale, année indiquée pour chaque pays'+(ds?' &middot; collecte du '+ds:'')+' &rsaquo;</a>';
 mc.style.setProperty('--dur',Math.max(120,d.lignes.length*9)+'s');
 mc.innerHTML='<div class="piste">'+tete+seg+tete+seg+'</div>';mc.hidden=false;
 }).catch(function(){});
