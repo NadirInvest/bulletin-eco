@@ -107,7 +107,7 @@ RECHERCHES = [
     ("Project Gutenberg", "https://www.gutenberg.org/ebooks/search/?query={q}", GUT_HOME),
     ("OAPEN", "https://library.oapen.org/discover?query={q}", "https://library.oapen.org/"),
     ("DOAB", "https://directory.doabooks.org/discover?query={q}", "https://directory.doabooks.org/"),
-    ("Open Textbook Library", "https://open.umn.edu/opentextbooks/search?q={q}", "https://open.umn.edu/opentextbooks/"),
+    ("Wikibooks", "https://en.wikibooks.org/w/index.php?search={q}", "https://en.wikibooks.org/"),
 ]
 
 CSS_LECTURE = """

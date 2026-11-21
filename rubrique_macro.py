@@ -5,6 +5,7 @@ Source : FMI, Perspectives de l'économie mondiale, via l'interface publique Dat
 Aucun appel à l'IA. Les chiffres de l'année en cours sont des estimations ou des prévisions du FMI.
 """
 import json
+import time
 import datetime
 import requests
 import bulletin
@@ -53,6 +54,8 @@ def fetch(indicateur, annees):
     for url in essais:
         try:
             r = requests.get(url, headers=HEADERS, timeout=90)
+            if r.status_code == 429:  # trop de demandes : inutile d'insister
+                raise RuntimeError("HTTP 429 : limite de demandes du FMI atteinte")
             if r.status_code != 200:
                 derniere = f"HTTP {r.status_code} : {str(r.text)[:100]}"
                 continue
@@ -144,9 +147,13 @@ def charger_anciens():
 
 def collecter(annee):
     donnees = {iso: {"iso": iso, "nom": nom} for iso, nom in PAYS.items()}
+    echecs_fmi = 0
     for code, cle in INDICATEURS:
         trouves = 0
         try:
+            if echecs_fmi >= 2:
+                raise RuntimeError("FMI ignoré après 2 échecs consécutifs (limite de demandes ou indisponibilité)")
+            time.sleep(3)  # pause entre deux demandes pour ne pas dépasser la limite du FMI
             valeurs = fetch(code, [annee - 2, annee - 1, annee])
             for iso in PAYS:
                 choix = choisir(valeurs.get(iso, {}), annee)
@@ -157,6 +164,10 @@ def collecter(annee):
             print(f"  {cle} : {trouves} pays (FMI)")
         except Exception as erreur:
             print(f"  FMI {code} : {erreur}")
+            if "ignoré" not in str(erreur):
+                echecs_fmi += 1
+        if trouves >= 15:
+            echecs_fmi = 0
         if trouves < 15 and cle in WB_CODES:  # le FMI n'a pas répondu : source de secours
             try:
                 ajoutes = 0

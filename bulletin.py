@@ -105,8 +105,15 @@ def appeler_gemini(prompt):
     url = f"https://generativelanguage.googleapis.com/v1beta/models/{MODELE}:generateContent"
     corps = {"contents": [{"parts": [{"text": prompt}]}],
              "generationConfig": {"responseMimeType": "application/json", "maxOutputTokens": 8192, "temperature": 0.4}}
-    r = requests.post(url, params={"key": os.environ["GEMINI_API_KEY"]}, json=corps, timeout=240)
-    r.raise_for_status()
+    attentes = [20, 45, 90]  # secondes d'attente avant chaque nouvelle tentative si le service est surchargé
+    for tentative in range(len(attentes) + 1):
+        r = requests.post(url, params={"key": os.environ["GEMINI_API_KEY"]}, json=corps, timeout=240)
+        if r.status_code in (429, 500, 502, 503, 504) and tentative < len(attentes):
+            print(f"  Service IA momentanément indisponible (HTTP {r.status_code}), nouvelle tentative dans {attentes[tentative]} s")
+            time.sleep(attentes[tentative])
+            continue
+        r.raise_for_status()
+        break
     brut = r.json()["candidates"][0]["content"]["parts"][0]["text"]
     brut = re.sub(r"^```(?:json)?|```$", "", brut.strip(), flags=re.MULTILINE).strip()
     return json.loads(brut)
