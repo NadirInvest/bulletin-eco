@@ -29,6 +29,7 @@ table.mac th:first-child,table.mac td:first-child{text-align:start;position:stic
 table.mac th{cursor:pointer;font-size:.78rem;text-transform:uppercase;letter-spacing:.04em;color:var(--doux)}
 table.mac td.ok{color:var(--hausse);font-weight:600}table.mac td.warn{color:#c77700;font-weight:600}table.mac td.bad{color:var(--baisse);font-weight:600}
 .scroll{overflow-x:auto}
+.an{color:var(--doux);font-size:.68rem;font-weight:400}
 .note{font-size:.82rem;color:var(--doux)}
 .kg{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;margin:8px 0 18px}
 .kc{background:var(--carte);border:1px solid var(--bord);border-radius:12px;padding:12px 14px}
@@ -75,22 +76,40 @@ def signe(v, d=1):
 
 
 def segments(l):
-    """Textes prêts à afficher dans le bandeau défilant (l'affichage n'a donc pas besoin d'être modifié pour un nouvel indicateur)."""
+    """Textes prêts à afficher dans le bandeau. L'année de chaque donnée est indiquée : celle du pays en titre,
+    et entre parenthèses uniquement pour les données d'une autre année."""
+    cles = ["croissance", "inflation", "chomage", "dette", "solde", "commerce"]
+    annees = [l[k]["a"] for k in cles if k in l]
+    base = max(set(annees), key=annees.count) if annees else None
+    l["libelle"] = f"{l['nom']} ({base})" if base else l["nom"]
+
+    def an(k):
+        return f" ({l[k]['a']})" if base and l[k]["a"] != base else ""
+
     seg = []
     if "croissance" in l:
-        seg.append({"t": f"Croissance {signe(l['croissance']['v'])} %", "c": "up" if l["croissance"]["v"] >= 0 else "down"})
+        seg.append({"t": f"Croissance {signe(l['croissance']['v'])} %{an('croissance')}", "c": "up" if l["croissance"]["v"] >= 0 else "down"})
     if "inflation" in l:
-        seg.append({"t": f"Inflation {fmt(l['inflation']['v'])} %", "c": ""})
+        seg.append({"t": f"Inflation {fmt(l['inflation']['v'])} %{an('inflation')}", "c": ""})
     if "chomage" in l:
-        seg.append({"t": f"Chômage {fmt(l['chomage']['v'])} %", "c": ""})
+        seg.append({"t": f"Chômage {fmt(l['chomage']['v'])} %{an('chomage')}", "c": ""})
     if "dette" in l:
-        seg.append({"t": f"Dette publique {fmt(l['dette']['v'], 0)} % du PIB", "c": ""})
+        seg.append({"t": f"Dette publique {fmt(l['dette']['v'], 0)} % du PIB{an('dette')}", "c": ""})
     if "solde" in l:
-        seg.append({"t": f"Solde budgétaire {signe(l['solde']['v'])} % du PIB", "c": "up" if l["solde"]["v"] >= 0 else "down"})
+        seg.append({"t": f"Solde budgétaire {signe(l['solde']['v'])} % du PIB{an('solde')}", "c": "up" if l["solde"]["v"] >= 0 else "down"})
     if "commerce" in l:
-        seg.append({"t": f"Balance commerciale {signe(l['commerce']['v'])} % du PIB ({l['commerce']['a']})",
+        seg.append({"t": f"Balance commerciale {signe(l['commerce']['v'])} % du PIB{an('commerce')}",
                     "c": "up" if l["commerce"]["v"] >= 0 else "down"})
     return seg
+
+
+def charger_anciens():
+    """Dernières valeurs publiées : elles sont conservées si une source ne répond pas lors d'une mise à jour."""
+    try:
+        d = json.loads((SORTIE / "data" / "macro.json").read_text(encoding="utf-8"))
+        return {l["iso"]: l for l in d.get("lignes", [])}
+    except Exception:
+        return {}
 
 
 def collecter(annee):
@@ -115,6 +134,15 @@ def collecter(annee):
         print(f"  commerce : {sum('commerce' in d for d in donnees.values())} pays")
     except Exception as erreur:
         print(f"  Banque mondiale (balance commerciale) : {erreur}")
+    anciens = charger_anciens()
+    conserves = 0
+    for iso, d in donnees.items():
+        for cle in [k for _, k in INDICATEURS] + ["commerce"]:
+            if cle not in d and cle in anciens.get(iso, {}):
+                d[cle] = anciens[iso][cle]  # source muette : on garde la dernière valeur connue
+                conserves += 1
+    if conserves:
+        print(f"  {conserves} valeur(s) conservée(s) de la mise à jour précédente (source indisponible)")
     lignes = [d for d in donnees.values() if any(k in d for _, k in INDICATEURS) or "commerce" in d]
     for l in lignes:
         l["segments"] = segments(l)
@@ -141,7 +169,7 @@ def cellule(l, cle, d=1, signe=False, suffixe=" %"):
     if not x:
         return '<td data-v="-1e9">n.d.</td>'
     txt = (("+" if signe and x["v"] > 0 else "") + fmt(x["v"], d)) + suffixe
-    return f'<td class="{classe(cle, x["v"])}" data-v="{x["v"]}" title="Année {x["a"]}">{txt}</td>'
+    return f'<td class="{classe(cle, x["v"])}" data-v="{x["v"]}">{txt} <small class="an">{x["a"]}</small></td>'
 
 
 def construire(lignes, annee):
@@ -183,8 +211,9 @@ def construire(lignes, annee):
         '<li><b>Solde budgétaire</b> : excédent (+) ou déficit (-) des administrations publiques, en pourcentage du PIB.</li>'
         '<li><b>Balance commerciale</b> : exportations moins importations de biens et de services, en pourcentage du PIB ; positive, c\'est un excédent, négative un déficit.</li>'
         '<li><b>Compte courant</b> : solde des échanges de biens, de services, de revenus et de transferts avec le reste du monde, en pourcentage du PIB.</li></ul>'
-        f'<p class="note">Sources : {e(SOURCE)} ; Banque mondiale pour la balance commerciale (dernière année disponible, survolez la valeur pour voir l\'année). Les valeurs de {annee} du FMI sont des estimations ou des prévisions et sont révisées régulièrement ; '
-        'lorsque l\'année en cours n\'est pas disponible, la dernière valeur connue est affichée. Données à titre informatif.</p></div>'
+        f'<p class="note">Sources : {e(SOURCE)} ; Banque mondiale pour la balance commerciale. '
+        'Chaque valeur correspond à la dernière année disponible chez la source : l\'année est indiquée à côté de la valeur. '
+        'Les données les plus récentes peuvent être des estimations, révisées régulièrement. Données à titre informatif.</p></div>'
         + script
     )
     entete = ('<h1 class="site">Indicateurs</h1><p class="sous">Les chiffres clés de l\'économie mondiale et de chaque pays</p>'
