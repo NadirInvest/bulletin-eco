@@ -1,12 +1,5 @@
 [
  {
-  "cle": "grh",
-  "nom": "GRH",
-  "description": "les préoccupations des entreprises en ressources humaines, éclairées par la recherche, avec des solutions",
-  "page": "grh.html",
-  "couleur": "#0b7285"
- },
- {
   "cle": "analyseur",
   "nom": "Analyseur financier",
   "description": "outil en ligne : ratios, équilibre financier, diagnostic et valorisation de votre entreprise",
@@ -40,6 +33,13 @@
   "description": "synthèses de la recherche récente sur les comportements managériaux, avec des solutions concrètes",
   "page": "management.html",
   "couleur": "#e8590c"
+ },
+ {
+  "cle": "grh",
+  "nom": "GRH",
+  "description": "les préoccupations des entreprises en ressources humaines, éclairées par la recherche, avec des solutions",
+  "page": "grh.html",
+  "couleur": "#0b7285"
  },
  {
   "cle": "economie",
