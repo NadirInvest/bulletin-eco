@@ -1,10 +1,38 @@
 [
  {
+  "cle": "analyseur",
+  "nom": "Analyseur financier",
+  "description": "outil en ligne : ratios, équilibre financier, diagnostic et valorisation de votre entreprise",
+  "page": "analyseur.html",
+  "couleur": "#364fc7"
+ },
+ {
   "cle": "fiscalite",
   "nom": "Fiscalité",
   "description": "une analyse par pays chaque semaine, avec lecture historique et comparaison internationale",
   "page": "fiscalite.html",
   "couleur": "#7a3cff"
+ },
+ {
+  "cle": "ipo",
+  "nom": "Opérations en bourse",
+  "description": "introductions en bourse et augmentations de capital dans le monde : veille, sources officielles et guide",
+  "page": "ipo.html",
+  "couleur": "#c2255c"
+ },
+ {
+  "cle": "lecture",
+  "nom": "Coin de lecture",
+  "description": "des livres gratuits et légaux, classés par sujet : économie, gestion, droit, psychologie, sociologie",
+  "page": "coin-de-lecture.html",
+  "couleur": "#a61e4d"
+ },
+ {
+  "cle": "macro",
+  "nom": "Indicateurs",
+  "description": "les chiffres clés de l'économie mondiale et de chaque pays",
+  "page": "macro.html",
+  "couleur": "#f08c00"
  },
  {
   "cle": "management",
@@ -26,27 +54,6 @@
   "description": "analyses macro et microéconomiques tirées d'articles scientifiques récents",
   "page": "economie.html",
   "couleur": "#2f9e44"
- },
- {
-  "cle": "analyseur",
-  "nom": "Analyseur financier",
-  "description": "outil en ligne : ratios, équilibre financier, diagnostic et valorisation de votre entreprise",
-  "page": "analyseur.html",
-  "couleur": "#364fc7"
- },
- {
-  "cle": "lecture",
-  "nom": "Coin de lecture",
-  "description": "des livres gratuits et légaux, classés par sujet : économie, gestion, droit, psychologie, sociologie",
-  "page": "coin-de-lecture.html",
-  "couleur": "#a61e4d"
- },
- {
-  "cle": "macro",
-  "nom": "Indicateurs",
-  "description": "les chiffres clés de l'économie mondiale et de chaque pays",
-  "page": "macro.html",
-  "couleur": "#f08c00"
  },
  {
   "cle": "programme",
