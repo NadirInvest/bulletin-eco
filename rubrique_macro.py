@@ -103,6 +103,23 @@ def fetch_commerce():
     """Balance commerciale (% du PIB) : dernière valeur disponible par pays (Banque mondiale)."""
     return {iso: v for iso, v in fetch_wb(WB_COMMERCE, 2018).items() if iso != "WEOWORLD"}
 
+EN_PAYS = {"WEOWORLD": "World", "MAR": "Morocco", "FRA": "France", "DEU": "Germany", "ESP": "Spain", "GBR": "United Kingdom",
+           "USA": "United States", "JPN": "Japan", "BRA": "Brazil", "TUR": "Turkey", "EGY": "Egypt", "SAU": "Saudi Arabia",
+           "CHN": "China", "IND": "India", "ZAF": "South Africa", "TUN": "Tunisia", "SEN": "Senegal", "CAN": "Canada",
+           "ITA": "Italy", "IDN": "Indonesia", "MYS": "Malaysia", "NGA": "Nigeria", "CIV": "Côte d'Ivoire", "MEX": "Mexico",
+           "KOR": "South Korea", "AUS": "Australia", "NZL": "New Zealand", "CHE": "Switzerland", "RUS": "Russia",
+           "PRT": "Portugal", "NOR": "Norway", "SWE": "Sweden", "DNK": "Denmark", "FIN": "Finland", "ARG": "Argentina",
+           "URY": "Uruguay", "PHL": "Philippines", "THA": "Thailand"}
+
+
+def fmt_en(v, d=1):
+    return f"{v:,.{d}f}"
+
+
+def signe_en(v, d=1):
+    return ("+" if v > 0 else "") + fmt_en(v, d)
+
+
 
 def signe(v, d=1):
     return ("+" if v > 0 else "") + fmt(v, d)
@@ -133,6 +150,24 @@ def segments(l):
     if "commerce" in l:
         seg.append({"t": f"Balance commerciale {signe(l['commerce']['v'])} % du PIB{an('commerce')}",
                     "c": "up" if l["commerce"]["v"] >= 0 else "down"})
+    # version anglaise des mêmes textes
+    en = []
+    ap = lambda k: f" ({l[k]['a']})" if base and l[k]["a"] != base else ""
+    if "croissance" in l:
+        en.append({"t": f"Growth {signe_en(l['croissance']['v'])}%{ap('croissance')}", "c": "up" if l["croissance"]["v"] >= 0 else "down"})
+    if "inflation" in l:
+        en.append({"t": f"Inflation {fmt_en(l['inflation']['v'])}%{ap('inflation')}", "c": ""})
+    if "chomage" in l:
+        en.append({"t": f"Unemployment {fmt_en(l['chomage']['v'])}%{ap('chomage')}", "c": ""})
+    if "dette" in l:
+        en.append({"t": f"Public debt {fmt_en(l['dette']['v'], 0)}% of GDP{ap('dette')}", "c": ""})
+    if "solde" in l:
+        en.append({"t": f"Budget balance {signe_en(l['solde']['v'])}% of GDP{ap('solde')}", "c": "up" if l["solde"]["v"] >= 0 else "down"})
+    if "commerce" in l:
+        en.append({"t": f"Trade balance {signe_en(l['commerce']['v'])}% of GDP{ap('commerce')}", "c": "up" if l["commerce"]["v"] >= 0 else "down"})
+    l["segments_en"] = en
+    l["nom_en"] = EN_PAYS.get(l["iso"], l["nom"])
+    l["libelle_en"] = f"{l['nom_en']} ({base})" if base else l["nom_en"]
     return seg
 
 

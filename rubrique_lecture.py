@@ -140,7 +140,7 @@ function sauver(){try{localStorage.setItem(cles,JSON.stringify(favs))}catch(x){}
 function appliquer(){var q=etat.q.toLowerCase(),n=0;cartes.forEach(function(c){
  var ok=(etat.sujet==='tous'||(etat.sujet==='favoris'?favs.indexOf(c.dataset.id)>-1:c.dataset.sujets.split(' ').indexOf(etat.sujet)>-1))&&(!q||c.textContent.toLowerCase().indexOf(q)>-1);
  c.classList.toggle('cachee',!ok);if(ok)n++});
- document.getElementById('compte').textContent=n+' livre'+(n>1?'s':'');
+ document.getElementById('compte').textContent=document.documentElement.lang==='en'?(n+' book'+(n>1?'s':'')):(n+' livre'+(n>1?'s':''));
  document.getElementById('vide').hidden=n>0}
 document.querySelectorAll('.puce').forEach(function(p){p.addEventListener('click',function(){
  document.querySelectorAll('.puce').forEach(function(x){x.classList.remove('actif')});p.classList.add('actif');etat.sujet=p.dataset.s;appliquer()})});

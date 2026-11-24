@@ -61,6 +61,23 @@ SOURCES_GROUPES = {
 SOURCES = ("Sources : FRED (Réserve fédérale de St. Louis), Exchange Rate API (exchangerate-api.com), gold-api.com. "
            "Données différées ou de clôture, à titre informatif.")
 
+# Libellés anglais (affichés sur la version anglaise du site)
+NOMS_EN = {"VIX (volatilité)": "VIX (volatility)", "Taux US à 10 ans": "US 10-year yield", "Pétrole Brent": "Brent crude",
+           "Pétrole WTI": "WTI crude", "Gaz naturel": "Natural gas", "Cuivre (mensuel)": "Copper (monthly)",
+           "Or": "Gold", "Argent": "Silver", "Platine": "Platinum"}
+PAYS_EN = {"États-Unis": "United States", "Japon": "Japan", "$ le baril": "$ per barrel", "$ le MMBtu": "$ per MMBtu",
+           "$ la tonne": "$ per tonne", "$ l'once": "$ per ounce", "Livre": "Pound", "Roupie": "Rupee"}
+TITRES_EN = {"indices": "Stock indices", "taux": "Rates", "matieres": "Commodities", "metaux": "Precious metals", "devises": "Currencies"}
+SOURCES_GROUPES_EN = {
+    "indices": "FRED (Federal Reserve Bank of St. Louis): closing values",
+    "taux": "FRED: closing value",
+    "matieres": "FRED: closing values (copper: monthly)",
+    "metaux": "gold-api.com",
+    "devises": "Exchange Rate API (daily rates)",
+}
+SOURCES_EN = ("Sources: FRED (Federal Reserve Bank of St. Louis), Exchange Rate API (exchangerate-api.com), gold-api.com. "
+              "Delayed or closing data, for information only.")
+
 
 def data_dir():
     d = bulletin.SORTIE / "data"
@@ -173,8 +190,13 @@ def main():
         print(f"{cle} : {len(items)} cours")
     if not total:
         raise SystemExit("Aucun cours n'a pu être récupéré.")
-    sortie = {"maj": maintenant.isoformat(timespec="minutes"), "sources": SOURCES,
-              "groupes": [{"cle": cle, "titre": titre, "source": SOURCES_GROUPES.get(cle, ""), "items": groupes[cle]}
+    for items in groupes.values():
+        for it in items:
+            it["nom_en"] = NOMS_EN.get(it["nom"], it["nom"])
+            it["pays_en"] = PAYS_EN.get(it["pays"], it["pays"])
+    sortie = {"maj": maintenant.isoformat(timespec="minutes"), "sources": SOURCES, "sources_en": SOURCES_EN,
+              "groupes": [{"cle": cle, "titre": titre, "titre_en": TITRES_EN.get(cle, titre), "source": SOURCES_GROUPES.get(cle, ""),
+                "source_en": SOURCES_GROUPES_EN.get(cle, ""), "items": groupes[cle]}
                    for cle, titre in GROUPES if groupes[cle]]}
     (data_dir() / "marches.json").write_text(json.dumps(sortie, ensure_ascii=False), encoding="utf-8")
     (data_dir() / "historique.json").write_text(json.dumps(hist, ensure_ascii=False), encoding="utf-8")

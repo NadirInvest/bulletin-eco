@@ -17,8 +17,11 @@ import rubrique_lecture as rl
 from bulletin import e, page
 
 SORTIE = bulletin.SORTIE
-# La SEC exige que les programmes automatiques s'identifient : nom du site + adresse de contact.
-CONTACT = "BulletinEco (site d'information economique, https://nadirinvest.github.io/bulletin-eco/) nadirinvest@users.noreply.github.com"
+# La SEC exige que les programmes automatiques s'identifient : nom + adresse e-mail de contact.
+# Remplacez l'adresse ci-dessous par la vôtre si vous le souhaitez (elle n'est utilisée que pour s'identifier auprès de la SEC).
+NOM = "BulletinEco"
+EMAIL = "nadirinvest@users.noreply.github.com"
+IDENTITES = [f"{NOM} {EMAIL}", f"{NOM}/1.0 ({EMAIL})"]  # formats « Nom adresse » puis « nom/version (adresse) »
 FLUX = [
     ("S-1", "Dépôt d'enregistrement (projet d'introduction ou d'émission)"),
     ("F-1", "Dépôt d'enregistrement d'un émetteur étranger"),
@@ -139,11 +142,21 @@ table.dir td,table.dir th{padding:8px 6px;border-bottom:1px solid var(--bord);te
 
 
 # --- 1. Veille SEC -----------------------------------------------------------------
+def telecharger(forme):
+    """Télécharge le flux Atom : essaie chaque format d'identification jusqu'à obtenir une réponse valide."""
+    derniere = ""
+    for identite in IDENTITES:
+        r = requests.get(URL_FLUX.format(t=forme), timeout=60,
+                         headers={"User-Agent": identite, "Accept-Encoding": "gzip, deflate", "Accept": "application/atom+xml, application/xml;q=0.9, */*;q=0.8"})
+        if r.status_code == 200:
+            return r.content
+        derniere = f"HTTP {r.status_code} ({identite.split()[0]}) : {re.sub(r'<[^>]+>', ' ', str(r.text))[:140].strip()}"
+        time.sleep(2)
+    raise RuntimeError(derniere)
+
+
 def lire_flux(forme):
-    r = requests.get(URL_FLUX.format(t=forme), headers={"User-Agent": CONTACT, "Accept-Encoding": "gzip, deflate"}, timeout=60)
-    if r.status_code != 200:
-        raise RuntimeError(f"HTTP {r.status_code}")
-    racine = ET.fromstring(r.content)
+    racine = ET.fromstring(telecharger(forme))
     items = []
     for entree in racine.findall("a:entry", NS):
         titre = (entree.findtext("a:title", default="", namespaces=NS) or "").strip()
@@ -237,7 +250,7 @@ def bloc_guide():
 JS = r"""
 (function(){var etat={c:'tous',q:''},items=[].slice.call(document.querySelectorAll('.ligne-ipo'));
 function ap(){var n=0,q=etat.q.toLowerCase();items.forEach(function(i){var ok=(etat.c==='tous'||i.dataset.c===etat.c)&&(!q||i.textContent.toLowerCase().indexOf(q)>-1);i.classList.toggle('cachee',!ok);if(ok)n++});
-var c=document.getElementById('compte');if(c)c.textContent=n+' dépôt'+(n>1?'s':'')}
+var c=document.getElementById('compte');if(c)c.textContent=document.documentElement.lang==='en'?(n+' filing'+(n>1?'s':'')):(n+' dépôt'+(n>1?'s':''))}
 document.querySelectorAll('.puce').forEach(function(p){p.addEventListener('click',function(){document.querySelectorAll('.puce').forEach(function(x){x.classList.remove('actif')});p.classList.add('actif');etat.c=p.dataset.c;ap()})});
 var r=document.getElementById('rech');if(r)r.addEventListener('input',function(ev){etat.q=ev.target.value;ap()});ap()})();
 """
@@ -285,8 +298,10 @@ def main():
         for _p, _b, u1, _r, u2 in lignes:
             liens += [(u1, u1), (u2, u2)]
     resultats = rl.verifier_tout(liens)
-    cassés = sum(1 for _u, ok in resultats if not ok)
-    print(f"  Annuaire : {len(liens)} liens, {cassés} indisponible(s)")
+    print(f"  Annuaire : {len(liens)} liens, {sum(1 for _u, ok in resultats if not ok)} indisponible(s)")
+    for (url, _), (_u, ok) in zip(liens, resultats):
+        if not ok:
+            print(f"    lien indisponible : {url}")
     construire(items, resultats)
     bulletin.enregistrer_rubrique("ipo", "Opérations en bourse", "introductions en bourse et augmentations de capital dans le monde : veille, sources officielles et guide",
                                   "ipo.html", "#c2255c")
