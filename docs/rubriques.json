@@ -14,11 +14,11 @@
   "couleur": "#e8590c"
  },
  {
-  "cle": "economie",
-  "nom": "Économie",
-  "description": "analyses macro et microéconomiques tirées d'articles scientifiques récents",
-  "page": "economie.html",
-  "couleur": "#2f9e44"
+  "cle": "grh",
+  "nom": "GRH",
+  "description": "les préoccupations des entreprises en ressources humaines, éclairées par la recherche, avec des solutions",
+  "page": "grh.html",
+  "couleur": "#0b7285"
  },
  {
   "cle": "analyseur",
@@ -49,11 +49,11 @@
   "couleur": "#f08c00"
  },
  {
-  "cle": "grh",
-  "nom": "GRH",
-  "description": "les préoccupations des entreprises en ressources humaines, éclairées par la recherche, avec des solutions",
-  "page": "grh.html",
-  "couleur": "#0b7285"
+  "cle": "economie",
+  "nom": "Économie",
+  "description": "analyses macro et microéconomiques tirées d'articles scientifiques récents",
+  "page": "economie.html",
+  "couleur": "#2f9e44"
  },
  {
   "cle": "programme",
